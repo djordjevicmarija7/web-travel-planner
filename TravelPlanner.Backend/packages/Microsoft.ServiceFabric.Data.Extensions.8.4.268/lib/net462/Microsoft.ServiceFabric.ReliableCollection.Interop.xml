@@ -1,0 +1,247 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.ServiceFabric.ReliableCollection.Interop</name>
+    </assembly>
+    <members>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Common.Interop.NativeTest.Initialize(System.String,System.Boolean,System.IntPtr@,System.IntPtr@,System.Guid@,System.Int64@)">
+            <summary>
+            Initialize test environment, create replica, and calls OpenReplica automatically, supports recovery modes to be sepecified.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Common.Interop.NativeTest.ResetReplica(System.IntPtr@)">
+            <summary>
+            Close the replica and create a new one. You need to call OpenReplica afterwards - before hooking
+            up any necessary StateManager events
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Common.Interop.NativeTest.OpenReplica">
+            <summary>
+            Opens the replica and switch to primary
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Common.Interop.NativeTest.RequestCheckpointAfterNextTransaction">
+            <summary>
+            Trigger checkpoint after next transaction. Useful in rebuilt event testing / backup and recovery testing
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Common.Interop.StateProviderInfo.FromStateProvider(Microsoft.ServiceFabric.ReliableCollection.Common.TraceId,System.IntPtr,System.Uri,Microsoft.ServiceFabric.ReliableCollection.Common.Interop.StateProviderKind)">
+            <summary>
+            Retrieve StateProvider information from a state provider and does necessary validation
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Common.Interop.StateProviderInfo.GetSimpleTypeName(System.String)">
+            <summary>
+            Transforms type names from assembly qualified format to a simpler format for serialization.
+            
+            Transforms type names from:
+            - Namespace.Foo`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]], MyAssembly, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+            to:
+            - Namespace.Foo`1[[System.Int32, mscorlib]], MyAssembly
+            </summary>
+            <param name="typeName">Type name to transform.</param>
+            <returns>Type name usable for replicated serialization.</returns>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.ReliableCollection.Common.Interop.StateProviderKind.TStore">
+            <summary>
+            ReliableDictionary
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.ReliableCollection.Common.Interop.StateProviderKind.ConcurrentQueue">
+            <summary>
+            ReliableConcurrentQueue
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.ReliableCollection.Common.Interop.StateProviderKind.ReliableDictionary_Compat">
+            <summary>
+            ReliableDictionary C# compat mode
+            </summary>
+        </member>
+        <member name="T:Microsoft.ServiceFabric.ReliableCollection.Common.NativeWrapper">
+            <summary>
+            Base of native wrapper objects based on handles
+            For now this only provides Ownership support for a parent object (say ReliableDictionaryImpl) owning the
+            underlying native wrapper (say TStore)
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.ReliableCollection.Common.NativeWrapper._owner">
+            <summary>
+            The owner of this NativeWrapper. Typically used when you have a managed object wrapping a native wrapper and want to 
+            maintain identity in this field.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.ReliableCollection.Common.NativeWrapper._ownsHandle">
+            <summary>
+            Whether this native wrapper owns the handle
+            In some cases, you want to create a "weak" reference that have a implicit lifetime
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.ReliableCollection.Common.NativeWrapper._handle">
+            <summary>
+            The native handle
+            </summary>
+        </member>
+        <member name="P:Microsoft.ServiceFabric.ReliableCollection.Common.NativeWrapper.NativeHandle">
+            <summary>
+            Returns the native handle
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Common.NativeWrapper.DisposeInternal(System.Boolean)">
+            <summary>
+            Dispose implementation 
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Common.NativeWrapper.ReleaseHandle(System.IntPtr)">
+            <summary>
+            Release the underlying native handle
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Common.NativeWrapper.DisposeImpl(System.Boolean)">
+            <summary>
+            Rest of the dispose implementation - up to the derived class 
+            This is always called regardless whether OwnsHandle is true/false
+            NOTE: This is guaranteed to get called once either in Dispose or in finalization, and isDisposing
+            is set accordingly
+            </summary>
+        </member>
+        <member name="P:Microsoft.ServiceFabric.ReliableCollection.Common.NativeWrapper.Owner">
+            <summary>
+            Owner of this TStore object. Useful for binding identity of this Tstore to a Dictionary implementation
+            so that we could avoid having two identity cache both for ReliableDictionaryImpl and TStore
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Common.NativeWrapper.GetOrCreateOwner(System.Func{System.Object})">
+            <summary>
+            Returns the associated owner if there is already one, or create a new one.
+            Typically used when you have a managed object wrapping a native wrapper and want to maintain 1:1 mapping
+            </summary>
+            <param name="createOwnerCallback">The callback that creates a new owner instances. This may gets called more than once in races.</param>
+        </member>
+        <member name="T:Microsoft.ServiceFabric.ReliableCollection.Common.ReliableIdentityCache`1">
+            <summary>
+            Identity cache for native wrapper types based on handle
+            </summary>
+            <typeparam name="T">The native wrapper type</typeparam>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Common.ReliableIdentityCache`1.GetOrCreate(System.IntPtr@,System.Func{System.IntPtr,`0})">
+            <summary>
+            Get or create a new object. 
+            </summary>
+            <param name="pHandle">
+            Native handle to the native object with a ref count. There are two cases:
+            1) We already have a wrapper for this handle in the cache. pHandle is not touched. 
+            2) We need to create a new wrapper, which "consumes" the AddRef as needed. CreateCallback is then called to create the object. 
+            Once the object is created successfully, pHandle is immediately NULLed-out. 
+            </param>
+            <param name="createCallback">Callback to be called to create the object
+            handle as needed.</param>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Common.ReliableIdentityCache`1.Add(System.IntPtr,`0)">
+            <summary>
+            Add into internal cache
+            This should only be used when there is structural guarantee that there won't be conflict (such as when you are creating a new transaction)
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Common.ReliableIdentityCache`1.Get(System.IntPtr)">
+            <summary>
+            Return existing item. If the key isn't present or it is present but the item is being finalized, return null 
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Common.ReliableIdentityCache`1.Remove(System.IntPtr,System.Object)">
+            <summary>
+            Remove from cache only when toRemove matches the item in the dictionary
+            Otherwise no-op
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Common.ReliableIdentityCache`1.ClearAll">
+            <summary>
+            Clear everything in the cache and call Dispose
+            This usually needed during shutdown
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Replicator.IStateSerializerResolver.GetStateSerializer``1(System.Uri)">
+            <summary>
+            Get state serializer.
+            </summary>
+            <typeparam name="T">Type for the serialization.</typeparam>
+            <param name="name">Name of the state provider.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Replicator.Transaction.GetOrCreateTransaction(System.IntPtr,Microsoft.ServiceFabric.ReliableCollection.Replicator.TransactionalReplicator,Microsoft.ServiceFabric.ReliableCollection.Common.ReliableIdentityCache{Microsoft.ServiceFabric.ReliableCollection.Replicator.Transaction})">
+            <summary>
+            Returns the cached transaction based on the handle or create a new transaction instance
+            </summary>
+            <param name="pTransaction">Native transaction handle without AddRef</param>
+            <param name="replicator">Transactional replicator to use for transaction</param>
+            <param name="cache">Reliable identity cache to use for transaction</param>
+            <returns>Existing transaction if found. A new transaction object otherwise. </returns>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Replicator.TransactionalReplicator.GetTStore``1(System.IntPtr@,System.Uri,Microsoft.ServiceFabric.Data.IStateSerializer{``0})">
+            <summary>
+            Get or create a new instance of TStore based on store handle as identity, if useIdentityCache = true
+            Otherwise, this always creates a new instance
+            <paramref name="stateProvider"/>the store handle that comes in with a RefCount. GetTStore will null it out when it succeeds, if typedStateProviderCache not defined
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Replicator.TransactionalReplicator.GetTConcurrentQueue``1(System.IntPtr@,System.Uri,Microsoft.ServiceFabric.Data.IStateSerializer{``0})">
+            <summary>
+            Get or create a new instance of TConcurrentQueue based on store handle as identity, if useIdentityCache = true
+            Otherwise, this always creates a new instance
+            <paramref name="stateProvider"/>the store handle that come in with a RefCount. GetTConcurrentQueue will null it out when it succeeds
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Replicator.TransactionalReplicator.GetTStore``1(System.IntPtr,System.Uri,Microsoft.ServiceFabric.Data.IStateSerializer{``0})">
+            <summary>
+            Get or create a new instance of TStore based on store handle as identity, if useIdentityCache = true
+            Otherwise, this always creates a new instance
+            <paramref name="store"/>the store handle that come in without a RefCount. GetTStore will increment refcount if new TStore instance is created
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Replicator.TransactionalReplicator.GetTConcurrentQueue``1(System.IntPtr,System.Uri,Microsoft.ServiceFabric.Data.IStateSerializer{``0})">
+            <summary>
+            Get or create a new instance of TConcurrentQueue based on store handle as identity, if useIdentityCache = true
+            Otherwise, this always creates a new instance
+            <paramref name="stateProvider"/>the store handle that comes in without a RefCount. GetTConcurrentQueue will increment refcount if new TStore instance is created
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Replicator.TransactionalReplicator.GetReliableState(System.IntPtr@,System.Uri,Microsoft.ServiceFabric.ReliableCollection.Replicator.IStateSerializerResolver)">
+            <summary>
+            Get or create a new instance of ReliableState based on stateProvider handle as identity, if useIdentityCache = true
+            Otherwise, this always creates a new instance
+            <paramref name="stateProviderHandle"/>the stateProvider handle that come in with a RefCount. It will be null'd on return when api succeeds
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Replicator.TransactionalReplicator.GetReliableState(System.IntPtr,System.Uri,Microsoft.ServiceFabric.ReliableCollection.Replicator.IStateSerializerResolver)">
+            <summary>
+            Get or create a new instance of ReliableState based on stateProvider handle as identity, if useIdentityCache = true
+            Otherwise, this always creates a new instance
+            <paramref name="stateProviderHandle"/>the stateProvider handle that come in without a RefCount. It's refcount will be incremented if new instance is created
+            </summary>
+        </member>
+        <member name="T:Microsoft.ServiceFabric.ReliableCollection.Store.KeyValueTuple`1">
+            <summary>
+            Structure defines a key value tuple for the TStore. The version sequence number is used to track the version of the key value tuple.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.ReliableCollection.Store.KeyValueTuple`1.#ctor(System.String,`0,System.Int64)">
+            <summary>
+            Key value tuple constructor
+            </summary>
+        </member>
+        <member name="P:Microsoft.ServiceFabric.ReliableCollection.Store.KeyValueTuple`1.Key">
+            <summary>
+            Key of the key value tuple.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ServiceFabric.ReliableCollection.Store.KeyValueTuple`1.Value">
+            <summary>
+            Value of the key value tuple.
+            </summary>
+        </member>
+        <member name="P:Microsoft.ServiceFabric.ReliableCollection.Store.KeyValueTuple`1.VersionSequenceNumber">
+            <summary>
+            Version sequence number of the key value tuple. This is used to track the version of the key value tuple.
+            </summary>
+        </member>
+    </members>
+</doc>

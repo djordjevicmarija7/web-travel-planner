@@ -1,0 +1,313 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.ServiceFabric.Data.Extensions</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.ServiceFabric.Data.Extensions.BuiltInTypeSerializer`1">
+            <summary>
+            Serializer for built-in data types
+            </summary>
+            <typeparam name="T"> Data type to be serialized </typeparam>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.BuiltInTypeSerializer`1.binaryReaderFunction">
+            <summary>
+            The binary reader method appropriate for type T
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.BuiltInTypeSerializer`1.binaryWriterFunction">
+            <summary>
+            The binary writer method appropriate for type T
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.BuiltInTypeSerializer`1.#ctor(System.Action{System.IO.BinaryWriter,`0},System.Func{System.IO.BinaryReader,`0})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.ServiceFabric.Data.Extensions.BuiltInTypeSerializer`1"/> class.
+            </summary>
+            <param name="binaryWriterFunction"> Binary Writer Function to use</param>
+            <param name="binaryReaderFunction"> Binary Reader Function to use</param>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.BuiltInTypeSerializer`1.IsSupportedType">
+            <summary>
+            Returns whether this class supports the provided type
+            </summary>
+            <returns>Whether the type parameter is supported</returns>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.BuiltInTypeSerializer`1.Read(System.IO.BinaryReader)">
+            <summary>
+            From byte array.
+            </summary>
+            <param name="binaryReader"> Binary Reader instance </param>
+            <returns>Representation of value as a 'T'</returns>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.BuiltInTypeSerializer`1.Read(`0,System.IO.BinaryReader)">
+            <summary>
+            De-serializes to object.
+            </summary>
+            <param name="baseValue"> Base value </param>
+            <param name="reader"> Instance of Binary Reader </param>
+            <returns>Deserialized version of T.</returns>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.BuiltInTypeSerializer`1.Write(`0,System.IO.BinaryWriter)">
+            <summary>
+            To byte array.
+            </summary>
+            <param name="value">Value to serialize.</param>
+            <param name="binaryWriter"> Binary Writer instance </param>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.BuiltInTypeSerializer`1.Write(`0,`0,System.IO.BinaryWriter)">
+            <summary>
+            Serializes in to binary writer.
+            </summary>
+            <param name="currentValue"> Current value </param>
+            <param name="newValue"> New value</param>
+            <param name="binaryWriter"> Binary Writer Instance </param>
+        </member>
+        <member name="T:Microsoft.ServiceFabric.Data.Extensions.BuiltInTypeSerializerBuilder">
+            <summary>
+            Class to construct <see cref="T:Microsoft.ServiceFabric.Data.Extensions.BuiltInTypeSerializer`1"/> instances
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.BuiltInTypeSerializerBuilder.MakeBuiltInTypeSerializer``1">
+            <summary>
+            Returns an instance of <see cref="T:Microsoft.ServiceFabric.Data.Extensions.BuiltInTypeSerializer`1"/> where
+            T is the data type passed in as parameter. The instance is returned
+            as an object instance.
+            </summary>
+            <typeparam name="T"> Data type to be serialized </typeparam>
+            <returns> Instance of BuiltInTypeSerializer </returns>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.DataContractStateSerializer`1.serializer">
+            <summary>
+            The serializer.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.DataContractStateSerializer`1.Read(System.IO.BinaryReader)">
+            <summary>
+            Converts byte[] to T
+            </summary>
+            <param name="binaryReader">Reader containing the serialized data.</param>
+            <returns>Deserialized version of T.</returns>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.DataContractStateSerializer`1.Read(`0,System.IO.BinaryReader)">
+            <summary>
+            Converts IEnumerable of byte[] to T
+            </summary>
+            <param name="baseValue"></param>
+            <param name="reader">Reader containing the serialized data.</param>
+            <returns>Deserialized version of T.</returns>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.DataContractStateSerializer`1.Write(`0,System.IO.BinaryWriter)">
+            <summary>
+            Converts T to byte array.
+            </summary>
+            <param name="value">T to be serialized.</param>
+            <param name="binaryWriter"></param>
+            <returns>Serialized version of T.</returns>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.DataContractStateSerializer`1.Write(`0,`0,System.IO.BinaryWriter)">
+            <summary>
+            Converts T to byte array.
+            </summary>
+            <param name="newValue"></param>
+            <param name="binaryWriter">Writer to which the serialized data should be written.</param>
+            <param name="currentValue"></param>
+            <returns>Serialized version of T.</returns>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.ISerializationManager.GetStateSerializer``1(System.Uri)">
+            <summary>
+            Get state serializer.
+            </summary>
+            <typeparam name="T">Type for the serialization.</typeparam>
+            <param name="name">Name of the state provider.</param>
+            <returns></returns>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.ISerializationManager.RemoveStateSerializer``1">
+            <summary>
+            Remove state serializer.
+            </summary>
+            <typeparam name="T">Type of the serializer.</typeparam>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.ISerializationManager.RemoveStateSerializer``1(System.Uri)">
+            <summary>
+            Remove state serializer.
+            </summary>
+            <typeparam name="T">Type of the serializer.</typeparam>
+            <param name="name">Name of the state provider.</param>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.ISerializationManager.TryAddStateSerializer``1(Microsoft.ServiceFabric.Data.IStateSerializer{``0})">
+            <summary>
+            Add state serializer.
+            </summary>
+            <typeparam name="T">Type of the serializer.</typeparam>
+            <param name="stateSerializer">The state serializer.</param>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.ISerializationManager.TryAddStateSerializer``1(System.Uri,Microsoft.ServiceFabric.Data.IStateSerializer{``0})">
+            <summary>
+            Add state serializer.
+            </summary>
+            <typeparam name="T">Type of the serializer.</typeparam>
+            <param name="name">Name of the state provider.</param>
+            <param name="stateSerializer">The state serializer.</param>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.SerializationManager.serializerDictionary">
+            <summary>
+            Serializer dictionary.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.AsyncEnumerator`1._isDone">
+            <summary>
+            Indicates that the enumerator has completed.
+            </summary>
+        </member>
+        <member name="T:Microsoft.ServiceFabric.Data.Extensions.Collections.ReliableConcurrentQueueImpl`1">
+            <summary>
+            Implementation for ReliableConcurrentQueue on native stack
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.Collections.ReliableConcurrentQueueImpl`1.DefaultTimeout">
+            <summary>
+            Default timeout.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.Collections.ReliableConcurrentQueueImpl`1._queue">
+            <summary>
+            The native ReliableConcurrentQueue wrapper
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.Collections.ReliableConcurrentQueueImpl`1._txnReplicator">
+            <summary>
+            The parent replicator
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.Collections.ReliableConcurrentQueueImpl`1.#ctor(Microsoft.ServiceFabric.ReliableCollection.Queue.TConcurrentQueue{`0},Microsoft.ServiceFabric.ReliableCollection.Replicator.TransactionalReplicator)">
+            <summary>
+            We need to make sure we only construct a new one if we never see it before. We need
+            to maintain correct identity. 
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.Collections.ReliableConcurrentQueueImpl`1.UnsafeCreateReliableConcurrentQueueImpl(Microsoft.ServiceFabric.ReliableCollection.Queue.TConcurrentQueue{`0},Microsoft.ServiceFabric.ReliableCollection.Replicator.TransactionalReplicator)">
+            <summary>
+            Do not call this directly use GetOrCreate method instead
+            We need to make sure we only construct a new one if we never see it before. We need
+            to maintain correct identity. 
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.Collections.ReliableConcurrentQueueImpl`1.GetOrCreate(Microsoft.ServiceFabric.ReliableCollection.Queue.TConcurrentQueue{`0},Microsoft.ServiceFabric.ReliableCollection.Replicator.TransactionalReplicator)">
+            <summary>
+            Return or create a new ReliableConcurrentQueueImpl instance on given TConcurrentQueue instance. There is a 1:1 mapping
+            through the Owner property.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.Collections.ReliableDictionaryImpl`2.DefaultCancellationToken">
+            <summary>
+            Default cancellation token.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.Collections.ReliableDictionaryImpl`2.DefaultTimeout">
+            <summary>
+            Default timeout.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.Collections.ReliableDictionaryImpl`2._store">
+            <summary>
+            The native store wrapper
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.Collections.ReliableDictionaryImpl`2._txnReplicator">
+            <summary>
+            The parent replicator
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.Collections.ReliableDictionaryImpl`2.#ctor(Microsoft.ServiceFabric.ReliableCollection.Store.TStore{`1},Microsoft.ServiceFabric.ReliableCollection.Replicator.TransactionalReplicator)">
+            <summary>
+            We need to make sure we only construct a new one if we never see it before. We need
+            to maintain correct identity. 
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.Collections.ReliableDictionaryImpl`2.UnsafeCreateReliableDictionaryImpl(Microsoft.ServiceFabric.ReliableCollection.Store.TStore{`1},Microsoft.ServiceFabric.ReliableCollection.Replicator.TransactionalReplicator)">
+            <summary>
+            Do not call this directly use GetOrCreate method instead
+            We need to make sure we only construct a new one if we never see it before. We need
+            to maintain correct identity. 
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.Collections.ReliableDictionaryImpl`2.GetOrCreate(Microsoft.ServiceFabric.ReliableCollection.Store.TStore{`1},Microsoft.ServiceFabric.ReliableCollection.Replicator.TransactionalReplicator)">
+            <summary>
+            Return or create a new ReliableDictionaryImpl instance on given TStore instance. There is a 1:1 mapping
+            through the Owner property.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.Collections.ReliableDictionaryImpl`2.UpdateDictionaryChangeEvent(System.Object,System.Object)">
+            <summary>
+            Subscribe to store change callback in native layer or unsubscribe depending on the state change
+            Must be called under a lock
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.Collections.ReliableDictionaryImpl`2.TestSetDictionaryChange(System.EventHandler{Microsoft.ServiceFabric.Data.Notifications.NotifyDictionaryChangedEventArgs{`0,`1}})">
+            <summary>
+            Enable DictionaryChange event without subscribing in native layer
+            Useful in making sure we don't get DictionaryChange events when subscribing to Rebuild event
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.ReliableStateManager.ArbitraryUriPrefix">
+            <summary>
+            Arbitrary Uri prefix to be prepended to non-Uri string names
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.ReliableStateManager._typeCache">
+            <summary>
+            Mapping of reliable object types to concrete wrapper types.
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.ReliableStateManager._serializationManager">
+            <summary>
+            Serializer dictionary.
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.ReliableStateManager.#ctor(System.Fabric.StatefulServiceContext,Microsoft.ServiceFabric.Data.ReliableStateManagerConfiguration)">
+            <summary>
+            Create a new ReliableStateManager
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.ReliableStateManager.#ctor(Microsoft.ServiceFabric.ReliableCollection.Replicator.TransactionalReplicator)">
+            <summary>
+            Create a new ReliableStateManager
+            </summary>
+        </member>
+        <member name="T:Microsoft.ServiceFabric.Data.Extensions.StateManagerTypeCache">
+            <summary>
+            Cache the concrete wrapper type corresponding to a given IReliableCollection interface in order to avoid 
+            reflection in subsequent calls to e.g. GetOrAddAsync
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.StateManagerTypeCache.defaultTypeTemplateMap">
+            <summary>
+            Type template map for yielding default interface implementations
+            </summary>
+        </member>
+        <member name="F:Microsoft.ServiceFabric.Data.Extensions.StateManagerTypeCache.typeCache">
+            <summary>
+            Type cache to avoid subsequent calls to MakeGenericType
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.StateManagerTypeCache.GetConcreteType(System.Type)">
+            <summary>
+            Get the wrapper type which corresponds to a given IReliableState interface
+            </summary>
+            <param name="type">The desired interface type</param>
+            <returns>The wrapper type to instantiate</returns>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.TransactionImpl.#ctor(Microsoft.ServiceFabric.ReliableCollection.Replicator.Transaction)">
+            <summary>
+            This needs to be private - we need to only construct if we've never seen this TransactionHandle before 
+            </summary>
+        </member>
+        <member name="M:Microsoft.ServiceFabric.Data.Extensions.TransactionImpl.GetOrCreate(Microsoft.ServiceFabric.ReliableCollection.Replicator.Transaction)">
+            <summary>
+            Get an existing TransactionImpl if we've seen this TransactionHandle before. Otherwise create a new 
+            TransactionImpl instance.
+            </summary>
+        </member>
+    </members>
+</doc>
