@@ -23,3 +23,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# VS
+.vs/
+*.suo
+*.user
+*.vsidx
+
+# build
+bin/
+obj/
