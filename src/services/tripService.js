@@ -1,7 +1,7 @@
 import axios from 'axios';
 import authService from './authService';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_TRAVEL_API_BASE_URL;
 
 function authHeader() {
   const token = authService.getToken();

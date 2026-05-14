@@ -10,6 +10,6 @@
         public decimal? Budget { get; set; }
         public string? Notes { get; set; }
         public int UserId { get; set; }
-        public List<DestionationDto> Destinations { get; set; } = new();
+        public List<DestinationDto> Destinations { get; set; } = new();
     }
 }
