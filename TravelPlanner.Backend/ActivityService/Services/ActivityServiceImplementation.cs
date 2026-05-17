@@ -5,11 +5,11 @@ using ActivityService.Models;
 
 namespace ActivityService.Services
 {
-    public class ActivityService : IActivityService
+    public class ActivityServiceImplementation : IActivityService
     {
         private readonly AppDbContext _context;
 
-        public ActivityService(AppDbContext context)
+        public ActivityServiceImplementation(AppDbContext context)
         {
             _context = context;
         }
