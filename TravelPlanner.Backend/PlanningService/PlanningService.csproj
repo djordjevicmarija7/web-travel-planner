@@ -17,7 +17,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.ServiceFabric.AspNetCore.Kestrel" Version="8.4.205-rc" />
+    <PackageReference Include="Microsoft.ServiceFabric.AspNetCore.Kestrel" Version="8.3.365" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
