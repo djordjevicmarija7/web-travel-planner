@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import tripService from '../services/tripService';
 import TripForm from '../components/TripForm';
-import  {Trip}  from '../models/Trip';
+import { Trip } from '../models/Trip';
 
 function DashboardPage() {
   const { user, logout } = useAuth();
@@ -15,25 +15,25 @@ function DashboardPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
 
- useEffect(() => {
+  useEffect(() => {
     fetchTrips();
   }, []);
 
-const fetchTrips = async () => {
-  try {
-    setLoading(true);
-    const data = await tripService.getAll();
+  const fetchTrips = async () => {
+    try {
+      setLoading(true);
+      const data = await tripService.getAll();
 
-    console.log('TRIPS RESPONSE:', data);
+      console.log('TRIPS RESPONSE:', data);
 
-    setTrips(Array.isArray(data) ? data : data?.trips || []);
-  } catch (err) {
-    console.log(err);
-    setError('Error loading trips.');
-  } finally {
-    setLoading(false);
-  }
-};
+      setTrips(Array.isArray(data) ? data : data?.trips || []);
+    } catch (err) {
+      console.log(err);
+      setError('Error loading trips.');
+    } finally {
+      setLoading(false);
+    }
+  };
   async function handleCreate(formData) {
     try {
       setCreateLoading(true);
@@ -68,6 +68,11 @@ const fetchTrips = async () => {
     <div>
       <div>
         <h1>Hello, {user?.name}!</h1>
+        {user?.role === 'admin' && (
+          <button onClick={() => navigate('/admin')}>
+            Admin panel
+          </button>
+        )}
         <button onClick={handleLogout}>Log out</button>
       </div>
 
