@@ -44,7 +44,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+builder.WebHost.UseUrls("http://localhost:5099");
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
