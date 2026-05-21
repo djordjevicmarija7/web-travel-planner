@@ -13,6 +13,7 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(
 
 builder.Services.AddScoped<ITripService, TripService>();
 builder.Services.AddScoped<IDestinationService, DestinationService>();
+builder.Services.AddScoped<IShareService, ShareService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

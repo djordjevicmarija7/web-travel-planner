@@ -11,7 +11,7 @@ namespace TravelService.Data
 
         public DbSet<Trip> Trips { get; set; }
         public DbSet<Destination> Destinations { get; set; }
-
+        public DbSet<ShareToken> ShareTokens { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Trip>()
@@ -22,6 +22,14 @@ namespace TravelService.Data
             modelBuilder.Entity<Trip>()
                 .Property(t => t.Budget)
                 .HasPrecision(18, 2);
+            modelBuilder.Entity<ShareToken>()
+                .HasOne(st => st.Trip)
+                .WithMany()
+                .HasForeignKey(st => st.TripId)
+                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<ShareToken>()
+                .HasIndex(st => st.Token)
+                .IsUnique();
         }
     }
 }
