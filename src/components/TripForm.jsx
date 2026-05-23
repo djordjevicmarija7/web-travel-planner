@@ -1,13 +1,7 @@
 import { useState } from 'react';
+import { Button, Input, Textarea } from './ui';
 
-const emptyForm = {
-  name: '',
-  description: '',
-  startDate: '',
-  endDate: '',
-  budget: '',
-  notes: '',
-};
+const emptyForm = { name: '', description: '', startDate: '', endDate: '', budget: '', notes: '' };
 
 function TripForm({ initialData, onSubmit, onCancel, loading }) {
   const [formData, setFormData] = useState(initialData || emptyForm);
@@ -16,124 +10,50 @@ function TripForm({ initialData, onSubmit, onCancel, loading }) {
   function handleChange(e) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   }
 
   function validate() {
-    const newErrors = {};
-
-    if (!formData.name.trim())
-      newErrors.name = 'Trip name is required.';
-
-    if (!formData.startDate)
-      newErrors.startDate = 'Start date is required.';
-
-    if (!formData.endDate)
-      newErrors.endDate = 'End date is required.';
-
-    if (formData.startDate && formData.endDate &&
-        formData.endDate < formData.startDate) {
-      newErrors.endDate = 'End date cannot be before start date.';
-    }
-
-    if (formData.budget !== '' && Number(formData.budget) < 0)
-      newErrors.budget = 'Budget cannot be negative.';
-
-    return newErrors;
+    const e = {};
+    if (!formData.name.trim()) e.name = 'Trip name is required.';
+    if (!formData.startDate) e.startDate = 'Start date is required.';
+    if (!formData.endDate) e.endDate = 'End date is required.';
+    if (formData.startDate && formData.endDate && formData.endDate < formData.startDate)
+      e.endDate = 'End date cannot be before start date.';
+    if (formData.budget !== '' && Number(formData.budget) < 0) e.budget = 'Budget cannot be negative.';
+    return e;
   }
 
   function handleSubmit(e) {
     e.preventDefault();
-
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
+    const ve = validate();
+    if (Object.keys(ve).length > 0) { setErrors(ve); return; }
     setErrors({});
-    onSubmit({
-      ...formData,
-      budget: formData.budget === '' ? null : Number(formData.budget),
-    });
+    onSubmit({ ...formData, budget: formData.budget === '' ? null : Number(formData.budget) });
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-
-      <div>
-        <label>Trip name *</label>
-        <input
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          placeholder="e.g. Summer vacation in Greece"
-        />
-        {errors.name && <p style={{ color: 'red' }}>{errors.name}</p>}
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <Input label="Trip Name *" name="name" value={formData.name} onChange={handleChange}
+        placeholder="e.g. Summer in Greece" error={errors.name} />
+      <Textarea label="Description" name="description" value={formData.description} onChange={handleChange}
+        placeholder="A short description of your trip..." />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+        <Input label="Start Date *" name="startDate" type="date" value={formData.startDate}
+          onChange={handleChange} error={errors.startDate} />
+        <Input label="End Date *" name="endDate" type="date" value={formData.endDate}
+          onChange={handleChange} error={errors.endDate} />
       </div>
-
-      <div>
-        <label>Description</label>
-        <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          placeholder="Short trip description"
-        />
+      <Input label="Planned Budget (€)" name="budget" type="number" min="0" value={formData.budget}
+        onChange={handleChange} placeholder="e.g. 1500" error={errors.budget} />
+      <Textarea label="Notes" name="notes" value={formData.notes} onChange={handleChange}
+        placeholder="Additional notes, reminders..." />
+      <div style={{ display: 'flex', gap: '10px', paddingTop: '4px' }}>
+        <Button type="submit" variant="primary" disabled={loading}>
+          {loading ? 'Saving...' : 'Save Trip'}
+        </Button>
+        <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>Cancel</Button>
       </div>
-
-      <div>
-        <label>Start date *</label>
-        <input
-          name="startDate"
-          type="date"
-          value={formData.startDate}
-          onChange={handleChange}
-        />
-        {errors.startDate && <p style={{ color: 'red' }}>{errors.startDate}</p>}
-      </div>
-
-      <div>
-        <label>End date *</label>
-        <input
-          name="endDate"
-          type="date"
-          value={formData.endDate}
-          onChange={handleChange}
-        />
-        {errors.endDate && <p style={{ color: 'red' }}>{errors.endDate}</p>}
-      </div>
-
-      <div>
-        <label>Planned budget (€)</label>
-        <input
-          name="budget"
-          type="number"
-          min="0"
-          value={formData.budget}
-          onChange={handleChange}
-          placeholder="e.g. 1500"
-        />
-        {errors.budget && <p style={{ color: 'red' }}>{errors.budget}</p>}
-      </div>
-
-      <div>
-        <label>Notes</label>
-        <textarea
-          name="notes"
-          value={formData.notes}
-          onChange={handleChange}
-          placeholder="Additional notes..."
-        />
-      </div>
-
-      <button type="submit" disabled={loading}>
-        {loading ? 'Saving...' : 'Save'}
-      </button>
-
-      <button type="button" onClick={onCancel} disabled={loading}>
-        Cancel
-      </button>
-
     </form>
   );
 }

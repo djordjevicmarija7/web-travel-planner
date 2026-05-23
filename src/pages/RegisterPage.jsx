@@ -1,18 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Button, Input } from '../components/ui';
 
 function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
-
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
-
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,124 +15,69 @@ function RegisterPage() {
   function handleChange(e) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   }
 
   function validate() {
-    const newErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required.';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required.';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email not valid.';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required.';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must have atleast 6 characters.';
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'The passwords don\'t match.';
-    }
-
-    return newErrors;
+    const e = {};
+    if (!formData.name.trim()) e.name = 'Name is required.';
+    if (!formData.email.trim()) e.email = 'Email is required.';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) e.email = 'Invalid email address.';
+    if (!formData.password) e.password = 'Password is required.';
+    else if (formData.password.length < 6) e.password = 'Password must be at least 6 characters.';
+    if (formData.password !== formData.confirmPassword) e.confirmPassword = "Passwords don't match.";
+    return e;
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setServerError('');
-
-    const validationErrors = validate();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
-    setErrors({});
-    setLoading(true);
-
+    const ve = validate();
+    if (Object.keys(ve).length > 0) { setErrors(ve); return; }
+    setErrors({}); setLoading(true);
     try {
       await register(formData.name, formData.email, formData.password);
-      setSuccessMessage('Registration successful! We are redirecting you...');
+      setSuccessMessage('Account created! Redirecting...');
       setTimeout(() => navigate('/login'), 1500);
-    } catch (err) {
-      setServerError('Registration failed. Try again.');
-    } finally {
-      setLoading(false);
-    }
+    } catch { setServerError('Registration failed. Please try again.'); } finally { setLoading(false); }
   }
 
   return (
-    <div>
-      <h2>Sign up</h2>
-
-      {serverError && <p style={{ color: 'red' }}>{serverError}</p>}
-      {successMessage && (
-        <p style={{ color: '#1D9E75', fontWeight: '500' }}>{successMessage}</p>
-      )}
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Name</label>
-          <input
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="Enter your name"
-          />
-          {errors.name && <p style={{ color: 'red' }}>{errors.name}</p>}
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div style={{ width: '100%', maxWidth: '400px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-xl)', padding: '40px', boxShadow: 'var(--shadow-lg)', animation: 'fadeIn 0.4s ease' }}>
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <div style={{ fontSize: '36px', marginBottom: '10px' }}>✈</div>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '34px', fontWeight: '300', letterSpacing: '0.06em', color: 'var(--accent-primary)' }}>Wanderlust</h1>
         </div>
 
-        <div>
-          <label>Email</label>
-          <input
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Enter your email"
-          />
-          {errors.email && <p style={{ color: 'red' }}>{errors.email}</p>}
-        </div>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', fontWeight: '400', marginBottom: '24px' }}>Create account</h2>
 
-        <div>
-          <label>Password</label>
-          <input
-            name="password"
-            type="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Enter your password"
-          />
-          {errors.password && <p style={{ color: 'red' }}>{errors.password}</p>}
-        </div>
+        {serverError && (
+          <div style={{ background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.25)', borderRadius: 'var(--radius-md)', padding: '10px 14px', fontSize: '13px', color: 'var(--status-cancelled)', marginBottom: '16px' }}>
+            {serverError}
+          </div>
+        )}
+        {successMessage && (
+          <div style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', borderRadius: 'var(--radius-md)', padding: '10px 14px', fontSize: '13px', color: 'var(--status-completed)', marginBottom: '16px' }}>
+            {successMessage}
+          </div>
+        )}
 
-        <div>
-          <label>Confirm password</label>
-          <input
-            name="confirmPassword"
-            type="password"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            placeholder="Confirm your password"
-          />
-          {errors.confirmPassword && (
-            <p style={{ color: 'red' }}>{errors.confirmPassword}</p>
-          )}
-        </div>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <Input label="Full Name" name="name" value={formData.name} onChange={handleChange} placeholder="Your name" error={errors.name} />
+          <Input label="Email" name="email" type="email" value={formData.email} onChange={handleChange} placeholder="you@example.com" error={errors.email} />
+          <Input label="Password" name="password" type="password" value={formData.password} onChange={handleChange} placeholder="At least 6 characters" error={errors.password} />
+          <Input label="Confirm Password" name="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} placeholder="Repeat your password" error={errors.confirmPassword} />
+          <Button type="submit" variant="primary" disabled={loading} style={{ width: '100%', marginTop: '8px', padding: '12px' }}>
+            {loading ? 'Creating account...' : 'Sign Up'}
+          </Button>
+        </form>
 
-        <button type="submit" disabled={loading}>
-          {loading ? 'Loading...' : 'Sign up'}
-        </button>
-      </form>
-
-      <p>
-        Already have an account? <Link to="/login">Login</Link>
-      </p>
+        <p style={{ textAlign: 'center', marginTop: '24px', fontSize: '13px', color: 'var(--text-muted)' }}>
+          Already have an account?{' '}
+          <Link to="/login" style={{ color: 'var(--accent-primary)', fontWeight: '500' }}>Sign in</Link>
+        </p>
+      </div>
     </div>
   );
 }
