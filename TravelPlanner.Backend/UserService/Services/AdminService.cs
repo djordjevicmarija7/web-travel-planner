@@ -1,4 +1,5 @@
-﻿using UserService.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using UserService.Data;
 using UserService.DTOs;
 using UserService.Models;
 
@@ -30,7 +31,7 @@ namespace UserService.Services
         public async Task<List<UserDto>> GetAllUsersAsync()
         {
             return await _context.Users
-                .Select(u=>MapToDto(u))
+                .Select(u => MapToDto(u))
                 .ToListAsync();
         }
 

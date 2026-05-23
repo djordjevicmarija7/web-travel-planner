@@ -18,23 +18,22 @@ namespace PlanningService
             return new[]
             {
                 new ServiceReplicaListener(context =>
-                    new KestrelCommunicationListener(context, (url, listener) =>
+                    new KestrelCommunicationListener(context, "ServiceEndpoint", (url, listener) =>
                     {
                         var builder = WebApplication.CreateBuilder();
-
-                        builder.Services.AddSingleton<IReliableStateManager>(
-                            this.StateManager);
-
+                        builder.Configuration
+    .SetBasePath(builder.Environment.ContentRootPath)
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .AddEnvironmentVariables();
                         builder.WebHost.UseKestrel();
-                        builder.WebHost.UseUrls(url);
+                        builder.WebHost.UseUrls(url); 
+                        builder.Services.AddSingleton<IReliableStateManager>(this.StateManager);
 
-                        var startup = new Startup(
-                            builder.Configuration, this.StateManager);
+                        var startup = new Startup(builder.Configuration, this.StateManager);
                         startup.ConfigureServices(builder.Services);
 
                         var app = builder.Build();
                         startup.Configure(app);
-
                         return app;
                     }))
             };

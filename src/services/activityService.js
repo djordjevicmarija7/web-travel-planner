@@ -1,23 +1,23 @@
 import axios from 'axios'
 import authService from './authService'
 
-const BASE_URL = import.meta.env.VITE_TRAVEL_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_ACTIVITY_API_BASE_URL;
 
 function authHeader() {
     const token = authService.getToken();
-    return token ? { Authorization: 'Bearer ${token}' } : {};
+    return token ? { Authorization: `Bearer ${token}` } : {};
 }
 const activityService = {
     async getAllByTrip(tripId) {
         const response = await axios.get(
-            '${BASE_URL}/trips/${tripId}/activities',
+            `${BASE_URL}/trips/${tripId}/activities`,
             { headers: authHeader() }
         );
         return response.data;
     },
     async create(tripId, activityData) {
         const response = await axios.post(
-            '${BASE_URL}/trips/${tripId}/activities',
+            `${BASE_URL}/trips/${tripId}/activities`,
             activityData,
             { headers: authHeader() }
         );
@@ -25,7 +25,7 @@ const activityService = {
     },
     async update(tripId, id, activityData) {
         const response = await axios.put(
-            '${BASE_URL}/trips/${tripId}/activities/${id}',
+            `${BASE_URL}/trips/${tripId}/activities/${id}`,
             activityData,
             { headers: authHeader() }
         );
@@ -33,7 +33,7 @@ const activityService = {
     },
     async remove(tripId, id) {
         await axios.delete(
-            '${BASE_URL}/trips/${tripId}/activities/${id}',
+            `${BASE_URL}/trips/${tripId}/activities/${id}`,
             { headers: authHeader() }
         );
     },

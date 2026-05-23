@@ -5,6 +5,7 @@ import DashboardPage from "./pages/DashboardPage";
 import TripDetailPage from "./pages/TripDetailPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminPage from "./pages/AdminPage";
+import SharedTripPage from './pages/SharedTripPage';
 
 function App() {
   return (
@@ -26,15 +27,16 @@ function App() {
               <TripDetailPage />
             </ProtectedRoute>
           } />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute>
-                <AdminPage />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/shared/:token" element={<SharedTripPage />} />
+      </Routes>
     </BrowserRouter>
   );
 }

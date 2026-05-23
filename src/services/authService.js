@@ -4,7 +4,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const authService = {
     async register(name, email, password) {
-        const response = await axios.post('${BASE_URL}/auth/register', {
+        const response = await axios.post(`${BASE_URL}/auth/register`, {
             name,
             email,
             password,
@@ -13,7 +13,7 @@ const authService = {
     },
 
     async login(email, password) {
-        const response = await axios.post('${BASE_URL}/auth/login', {
+        const response = await axios.post(`${BASE_URL}/auth/login`, {
             email,
             password,
         });

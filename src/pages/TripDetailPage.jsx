@@ -9,8 +9,9 @@ import ActivityForm from '../components/ActivityForm';
 import ActivityList from '../components/ActivityList';
 import ChecklistSection from '../components/ChecklistSection';
 import ExpenseSection from '../components/ExpenseSection';
+import ShareSection from '../components/ShareSection';
 
-const TABS = ['Overview', 'Activities', 'Checklist', 'Expenses'];
+const TABS = ['Overview', 'Activities', 'Checklist', 'Expenses', 'Share'];
 
 function TripDetailPage() {
   const { id } = useParams();
@@ -33,36 +34,36 @@ function TripDetailPage() {
     fetchAll();
   }, [id]);
 
-async function fetchAll() {
-  try {
-    setLoading(true);
+  async function fetchAll() {
+    try {
+      setLoading(true);
 
-    const tripData = await tripService.getById(id);
-    console.log('TRIP OK', tripData);
+      const tripData = await tripService.getById(id);
+      console.log('TRIP OK', tripData);
 
-    const activitiesData = await activityService.getAllByTrip(id);
-    console.log('ACTIVITIES OK', activitiesData);
+      const activitiesData = await activityService.getAllByTrip(id);
+      console.log('ACTIVITIES OK', activitiesData);
 
-    const checklistData = await checklistService.getAllByTrip(id);
-    console.log('CHECKLIST OK', checklistData);
+      const checklistData = await checklistService.getAllByTrip(id);
+      console.log('CHECKLIST OK', checklistData);
 
-    const expensesData = await expenseService.getAllByTrip(id);
-    console.log('EXPENSES OK', expensesData);
+      const expensesData = await expenseService.getAllByTrip(id);
+      console.log('EXPENSES OK', expensesData);
 
-    setTrip(tripData);
-    setActivities(activitiesData);
-    setChecklistItems(checklistData);
-    setExpenses(expensesData);
+      setTrip(tripData);
+      setActivities(activitiesData);
+      setChecklistItems(checklistData);
+      setExpenses(expensesData);
 
-  } catch (err) {
-    console.log(err);
-    console.log(err.response);
+    } catch (err) {
+      console.log(err);
+      console.log(err.response);
 
-    setError('Error loading the trip plan.');
-  } finally {
-    setLoading(false);
+      setError('Error loading the trip plan.');
+    } finally {
+      setLoading(false);
+    }
   }
-}
 
   async function handleEdit(formData) {
     try {
@@ -221,6 +222,11 @@ async function fetchAll() {
               setExpenses((prev) => prev.filter((e) => e.id !== deletedId))
             }
           />
+        </div>
+      )}
+        {activeTab === 'Share' && (
+        <div>
+          <ShareSection tripId={id} />
         </div>
       )}
     </div>

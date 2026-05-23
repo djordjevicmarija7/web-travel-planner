@@ -6,6 +6,8 @@ using TravelService.Services;
 
 namespace TravelService.Controllers
 {
+    [ApiController]
+    [Route("api/shared")]
     public class SharedTripController : ControllerBase
     {
         private readonly IShareService _shareService;

@@ -5,26 +5,26 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 function authHeader() {
     const token = authService.getToken();
-    return token ? { Authorization: 'Bearer ${token}' } : {};
+    return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 const adminService = {
     async getAllUsers() {
-        const response = await axios.get('${BASE_URL}/admin/users', {
+        const response = await axios.get(`${BASE_URL}/admin/users`, {
             headers: authHeader(),
         });
         return response.data;
     },
     async updateRole(id, role) {
         const response = await axios.patch(
-            '{BASE_URL}/admin/users/${id}/role',
+            `${BASE_URL}/admin/users/${id}/role`,
             { role },
             { headers: authHeader() }
         );
         return response.data;
     },
-    async deleteUser() {
-        await axios.delete('${BASE_URL}/admin/users/${id}', {
+    async deleteUser(id) {
+        await axios.delete(`${BASE_URL}/admin/users/${id}`, {
             headers: authHeader(),
         });
     },
