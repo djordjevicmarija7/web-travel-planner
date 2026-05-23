@@ -16,6 +16,7 @@ function RegisterPage() {
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -63,7 +64,8 @@ function RegisterPage() {
 
     try {
       await register(formData.name, formData.email, formData.password);
-      navigate('/login');
+      setSuccessMessage('Registration successful! We are redirecting you...');
+      setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
       setServerError('Registration failed. Try again.');
     } finally {
@@ -76,7 +78,9 @@ function RegisterPage() {
       <h2>Sign up</h2>
 
       {serverError && <p style={{ color: 'red' }}>{serverError}</p>}
-
+      {successMessage && (
+        <p style={{ color: '#1D9E75', fontWeight: '500' }}>{successMessage}</p>
+      )}
       <form onSubmit={handleSubmit}>
         <div>
           <label>Name</label>

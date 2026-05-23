@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import shareService from '../services/shareService';
+import { useServices } from '../context/ServiceContext';
 
 function SharedTripPage() {
+  const {shareService}  = useServices();
   const { token } = useParams();
   const navigate = useNavigate();
 

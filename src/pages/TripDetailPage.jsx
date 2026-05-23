@@ -1,21 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import tripService from '../services/tripService';
-import activityService from '../services/activityService';
-import checklistService from '../services/checklistService';
-import expenseService from '../services/expenseService';
 import TripForm from '../components/TripForm';
 import ActivityForm from '../components/ActivityForm';
 import ActivityList from '../components/ActivityList';
 import ChecklistSection from '../components/ChecklistSection';
 import ExpenseSection from '../components/ExpenseSection';
 import ShareSection from '../components/ShareSection';
+import { useServices } from '../context/ServiceContext';
+import { useToast } from '../hooks/useToast';
+import Toast from '../components/Toast';
 
 const TABS = ['Overview', 'Activities', 'Checklist', 'Expenses', 'Share'];
 
 function TripDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { tripService, activityService, checklistService, expenseService } =
+    useServices();
+  const { toast, showToast } = useToast();
 
   const [trip, setTrip] = useState(null);
   const [activities, setActivities] = useState([]);
@@ -39,27 +41,16 @@ function TripDetailPage() {
       setLoading(true);
 
       const tripData = await tripService.getById(id);
-      console.log('TRIP OK', tripData);
-
       const activitiesData = await activityService.getAllByTrip(id);
-      console.log('ACTIVITIES OK', activitiesData);
-
       const checklistData = await checklistService.getAllByTrip(id);
-      console.log('CHECKLIST OK', checklistData);
-
       const expensesData = await expenseService.getAllByTrip(id);
-      console.log('EXPENSES OK', expensesData);
-
       setTrip(tripData);
       setActivities(activitiesData);
       setChecklistItems(checklistData);
       setExpenses(expensesData);
 
     } catch (err) {
-      console.log(err);
-      console.log(err.response);
-
-      setError('Error loading the trip plan.');
+      showToast('Error loading the trip plan.', 'error');
     } finally {
       setLoading(false);
     }
@@ -71,8 +62,9 @@ function TripDetailPage() {
       const updated = await tripService.update(id, formData);
       setTrip(updated);
       setEditMode(false);
+      showToast('Trip plan updated successfully.');
     } catch {
-      setError('Error updating the trip plan.');
+      showToast('Error while updating the trip plan.', 'error');
     } finally {
       setEditLoading(false);
     }
@@ -84,7 +76,7 @@ function TripDetailPage() {
       await tripService.remove(id);
       navigate('/dashboard');
     } catch {
-      setError('Error deleting the trip plan.');
+      showToast('Error while deleting the trip plan.', 'error');
     }
   }
 
@@ -94,12 +86,14 @@ function TripDetailPage() {
       const created = await activityService.create(id, formData);
       setActivities((prev) => [...prev, created]);
       setShowActivityForm(false);
+      showToast('Activity added successfully!');
     } catch {
-      alert('Error adding activity.');
+      showToast('Error while adding new activity to trip plan.', 'error');
     } finally {
       setActivityLoading(false);
     }
   }
+
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p style={{ color: 'red' }}>{error}</p>;
@@ -187,6 +181,12 @@ function TripDetailPage() {
             onDeleted={(deletedId) =>
               setActivities((prev) => prev.filter((a) => a.id !== deletedId))
             }
+            onUpdated={(updated) => {
+              setActivities((prev) =>
+                prev.map((a) => (a.id === updated.id ? updated : a))
+              );
+              showToast('Activity updated successfully!');
+            }}
           />
         </div>
       )}
@@ -224,7 +224,7 @@ function TripDetailPage() {
           />
         </div>
       )}
-        {activeTab === 'Share' && (
+      {activeTab === 'Share' && (
         <div>
           <ShareSection tripId={id} />
         </div>

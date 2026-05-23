@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import tripService from '../services/tripService';
 import TripForm from '../components/TripForm';
 import { Trip } from '../models/Trip';
+import { useServices } from '../context/ServiceContext';
+import { useToast } from '../hooks/useToast';
+import Toast from '../components/Toast';
 
 function DashboardPage() {
+  const {tripService} = useServices();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { toast, showToast } = useToast();
 
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,13 +27,9 @@ function DashboardPage() {
     try {
       setLoading(true);
       const data = await tripService.getAll();
-
-      console.log('TRIPS RESPONSE:', data);
-
       setTrips(Array.isArray(data) ? data : data?.trips || []);
     } catch (err) {
-      console.log(err);
-      setError('Error loading trips.');
+      showToast('Error while loading trips.', 'error');
     } finally {
       setLoading(false);
     }
@@ -39,9 +39,10 @@ function DashboardPage() {
       setCreateLoading(true);
       await tripService.create(formData);
       setShowCreateForm(false);
-      await fetchTrips(); // refresh list
+      await fetchTrips(); 
+      showToast('Trip plan created successfully!');
     } catch (err) {
-      setError('Error creating trip.');
+      showToast('Error while creating trip.', 'error');
     } finally {
       setCreateLoading(false);
     }
@@ -50,12 +51,12 @@ function DashboardPage() {
   async function handleDelete(id) {
     if (!window.confirm('Are you sure you want to delete this trip?'))
       return;
-
     try {
       await tripService.remove(id);
       setTrips((prev) => prev.filter((t) => t.id !== id));
+      showToast('Trip plan deleted successfully!');
     } catch (err) {
-      setError('Error deleting trip.');
+      showToast('Error while deleting trip.', 'error');
     }
   }
 

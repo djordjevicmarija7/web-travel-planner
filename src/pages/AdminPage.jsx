@@ -1,18 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import adminService from '../services/adminService';
+import { useServices } from '../context/ServiceContext';
+import { useToast } from '../hooks/useToast';
+import Toast from '../components/Toast';
 
 function AdminPage() {
+  const {adminService} = useServices();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast, showToast } = useToast();
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // If the user is not an admin, redirect to dashboard
     if (user?.role !== 'admin') {
       navigate('/dashboard');
       return;
@@ -26,7 +29,7 @@ function AdminPage() {
       const data = await adminService.getAllUsers();
       setUsers(data);
     } catch {
-      setError('Error loading users.');
+      showToast('Error while loading users.', 'error');
     } finally {
       setLoading(false);
     }
@@ -45,8 +48,9 @@ function AdminPage() {
       setUsers((prev) =>
         prev.map((u) => (u.id === id ? updated : u))
       );
+      showToast('Role successfully changed to "${newRole}".');
     } catch {
-      setError('Error changing user role.');
+      showToast('Error while changing user role.', 'error');
     }
   }
 
@@ -59,8 +63,9 @@ function AdminPage() {
       setUsers((prev) =>
         prev.filter((u) => u.id !== id)
       );
+      showToast('User deleted successfully.');
     } catch {
-      setError('Error deleting user.');
+      showToast('Error while deleting user.', 'error');
     }
   }
 

@@ -27,6 +27,7 @@ async function login(email, password) {
 
     async function register(name, email, password) {
         await authService.register(name, email, password);
+        return message;
     }
 
     function logout() {
