@@ -10,37 +10,27 @@ function authHeader() {
 
 const tripService = {
   async getAll() {
-    const response = await axios.get(`${BASE_URL}/trips`, {
-      headers: authHeader(),
-    });
+    const response = await axios.get(`${BASE_URL}/trips`, { headers: authHeader() });
     return response.data;
   },
 
   async getById(id) {
-    const response = await axios.get(`${BASE_URL}/trips/${id}`, {
-      headers: authHeader(),
-    });
+    const response = await axios.get(`${BASE_URL}/trips/${id}`, { headers: authHeader() });
     return response.data;
   },
 
   async create(tripData) {
-    const response = await axios.post(`${BASE_URL}/trips`, tripData, {
-      headers: authHeader(),
-    });
+    const response = await axios.post(`${BASE_URL}/trips`, tripData, { headers: authHeader() });
     return response.data;
   },
 
   async update(id, tripData) {
-    const response = await axios.put(`${BASE_URL}/trips/${id}`, tripData, {
-      headers: authHeader(),
-    });
+    const response = await axios.put(`${BASE_URL}/trips/${id}`, tripData, { headers: authHeader() });
     return response.data;
   },
 
   async remove(id) {
-    await axios.delete(`${BASE_URL}/trips/${id}`, {
-      headers: authHeader(),
-    });
+    await axios.delete(`${BASE_URL}/trips/${id}`, { headers: authHeader() });
   },
 };
 

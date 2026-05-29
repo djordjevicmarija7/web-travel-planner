@@ -1,17 +1,17 @@
 import axios from 'axios';
 import authService from './authService';
 
-const BASE_URL = import.meta.env.VITE_PLANNING_API_BASE_URL;
+const BASE_URL = import.meta.env.VITE_TRAVEL_API_BASE_URL;
 
 function authHeader() {
   const token = authService.getToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-const expenseService = {
+const destinationService = {
   async getAllByTrip(tripId) {
     const response = await axios.get(
-      `${BASE_URL}/trips/${tripId}/expenses`,
+      `${BASE_URL}/trips/${tripId}/destinations`,
       { headers: authHeader() }
     );
     return response.data;
@@ -19,7 +19,16 @@ const expenseService = {
 
   async create(tripId, data) {
     const response = await axios.post(
-      `${BASE_URL}/trips/${tripId}/expenses`,
+      `${BASE_URL}/trips/${tripId}/destinations`,
+      data,
+      { headers: authHeader() }
+    );
+    return response.data;
+  },
+
+  async update(tripId, id, data) {
+    const response = await axios.put(
+      `${BASE_URL}/trips/${tripId}/destinations/${id}`,
       data,
       { headers: authHeader() }
     );
@@ -28,10 +37,10 @@ const expenseService = {
 
   async remove(tripId, id) {
     await axios.delete(
-      `${BASE_URL}/trips/${tripId}/expenses/${id}`,
+      `${BASE_URL}/trips/${tripId}/destinations/${id}`,
       { headers: authHeader() }
     );
   },
 };
 
-export default expenseService;
+export default destinationService;
