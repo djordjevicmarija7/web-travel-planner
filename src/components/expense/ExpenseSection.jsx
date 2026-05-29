@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import expenseService from '../services/expenseService';
-import ConfirmDialog from './ui/ConfirmDialog';
-import { Button, Input, Textarea, Select, FormRow, Modal, EmptyState, ProgressBar } from './ui';
+import expenseService from '../../services/expenseService';
+import ConfirmDialog from '../common/ConfirmDialog';
+import { Button, Input, Textarea, Select, FormRow, Modal, EmptyState, ProgressBar } from '../ui';
 
 const CATEGORIES = [
   { value: 'transport',      label: 'Transport',      icon: '✈' },

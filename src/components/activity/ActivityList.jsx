@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import activityService from '../services/activityService';
+import activityService from '../../services/activityService';
 import ActivityForm from './ActivityForm';
-import ConfirmDialog from './ui/ConfirmDialog';
-import { Badge, EmptyState, Modal } from './ui';
+import ConfirmDialog from '../common/ConfirmDialog';
+import { Badge, EmptyState, Modal } from '../ui';
 
 const STATUS_LABELS = {
   planned: 'Planned', reserved: 'Reserved',

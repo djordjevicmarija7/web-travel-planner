@@ -33,7 +33,6 @@ const shareService = {
     );
   },
 
-  // Fixed: was getSharedToken in old code, SharedTripPage calls getSharedTrip
   async getSharedTrip(token) {
     const response = await axios.get(`${BASE_URL}/shared/${token}`);
     return response.data;

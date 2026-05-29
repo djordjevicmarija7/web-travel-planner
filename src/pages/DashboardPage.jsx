@@ -1,311 +1,147 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { useServices } from '../context/ServiceContext';
 import { useToast } from '../hooks/useToast';
-import Navbar from '../components/Navbar';
-import TripForm from '../components/TripForm';
-import ActivityForm from '../components/ActivityForm';
-import ActivityList from '../components/ActivityList';
-import DestinationSection from '../components/DestinationSection';
-import ChecklistSection from '../components/ChecklistSection';
-import ExpenseSection from '../components/ExpenseSection';
-import ShareSection from '../components/ShareSection';
-import ConfirmDialog from '../components/ui/ConfirmDialog';
-import Toast from '../components/Toast';
-import { Button, Badge, Modal, StatCard, Spinner } from '../components/ui';
+import Navbar from '../components/common/Navbar';
+import TripForm from '../components/trip/TripForm';
+import ConfirmDialog from '../components/common/ConfirmDialog';
+import Toast from '../components/common/Toast';
+import { Button, Card, Badge, EmptyState, Modal, Spinner } from '../components/ui';
 
-const TABS = [
-  { id: 'Overview',     icon: '◎',  label: 'Overview' },
-  { id: 'Destinations', icon: '🗺',  label: 'Destinations' },
-  { id: 'Activities',   icon: '🗓',  label: 'Activities' },
-  { id: 'Checklist',    icon: '✓',   label: 'Checklist' },
-  { id: 'Expenses',     icon: '💳',  label: 'Expenses' },
-  { id: 'Share',        icon: '🔗',  label: 'Share' },
-];
+function getTripDuration(start, end) {
+  if (!start || !end) return null;
+  const diff = Math.ceil((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24));
+  return diff > 0 ? `${diff} day${diff !== 1 ? 's' : ''}` : null;
+}
 
-function TripDetailPage() {
-  const { id }       = useParams();
-  const navigate     = useNavigate();
-  const { tripService, activityService, checklistService, expenseService, destinationService } = useServices();
+function getTripStatus(start, end) {
+  const now = new Date();
+  const s = new Date(start), e = new Date(end);
+  if (now < s) return { label: 'Upcoming', variant: 'upcoming' };
+  if (now > e) return { label: 'Past',     variant: 'past' };
+  return         { label: 'Ongoing',  variant: 'ongoing' };
+}
+
+function DashboardPage() {
+  const { tripService } = useServices();
+  const { user }        = useAuth();
+  const navigate        = useNavigate();
   const { toast, showToast } = useToast();
 
-  const [trip, setTrip]                   = useState(null);
-  const [activities, setActivities]       = useState([]);
-  const [checklistItems, setChecklist]    = useState([]);
-  const [expenses, setExpenses]           = useState([]);
-  const [destinations, setDestinations]   = useState([]);
+  const [trips, setTrips]           = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [showModal, setShowModal]   = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
 
-  const [loading, setLoading]             = useState(true);
-  const [activeTab, setActiveTab]         = useState('Overview');
-  const [editModal, setEditModal]         = useState(false);
-  const [editLoading, setEditLoading]     = useState(false);
-  const [activityModal, setActivityModal] = useState(false);
-  const [activityLoading, setActivityLoading] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false });
+  useEffect(() => { fetchTrips(); }, []);
 
-  useEffect(() => { fetchAll(); }, [id]);
-
-  async function fetchAll() {
+  async function fetchTrips() {
     try {
       setLoading(true);
-      const [tripData, activitiesData, checklistData, expensesData, destinationsData] = await Promise.all([
-        tripService.getById(id),
-        activityService.getAllByTrip(id),
-        checklistService.getAllByTrip(id),
-        expenseService.getAllByTrip(id),
-        destinationService.getAllByTrip(id),
-      ]);
-      setTrip(tripData);
-      setActivities(activitiesData);
-      setChecklist(checklistData);
-      setExpenses(expensesData);
-      setDestinations(destinationsData);
-    } catch { showToast('Error loading trip.', 'error'); }
+      const data = await tripService.getAll();
+      setTrips(Array.isArray(data) ? data : data?.trips || []);
+    } catch { showToast('Error loading trips.', 'error'); }
     finally { setLoading(false); }
   }
 
-  async function handleEdit(formData) {
+  async function handleCreate(formData) {
     try {
-      setEditLoading(true);
-      const updated = await tripService.update(id, formData);
-      setTrip(updated); setEditModal(false);
-      showToast('Trip updated.');
-    } catch { showToast('Error updating trip.', 'error'); }
-    finally { setEditLoading(false); }
+      setCreateLoading(true);
+      await tripService.create(formData);
+      setShowModal(false);
+      await fetchTrips();
+      showToast('Trip plan created!');
+    } catch { showToast('Error creating trip.', 'error'); }
+    finally { setCreateLoading(false); }
   }
 
-  function handleDelete() {
-    setConfirmDialog({ isOpen: true });
+  function handleDelete(id, e) {
+    e.stopPropagation();
+    setConfirmDialog({ isOpen: true, id });
   }
 
   async function handleDeleteConfirmed() {
-    setConfirmDialog({ isOpen: false });
-    try { await tripService.remove(id); navigate('/dashboard'); }
-    catch { showToast('Error deleting trip.', 'error'); }
-  }
-
-  async function handleAddActivity(formData) {
+    const { id } = confirmDialog;
+    setConfirmDialog({ isOpen: false, id: null });
     try {
-      setActivityLoading(true);
-      const created = await activityService.create(id, formData);
-      setActivities((prev) => [...prev, created]);
-      setActivityModal(false);
-      showToast('Activity added!');
-    } catch { showToast('Error adding activity.', 'error'); }
-    finally { setActivityLoading(false); }
+      await tripService.remove(id);
+      setTrips((prev) => prev.filter((t) => t.id !== id));
+      showToast('Trip deleted.');
+    } catch { showToast('Error deleting trip.', 'error'); }
   }
 
-  if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
-      <Spinner size={32} />
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: '20px', color: 'var(--accent-primary)', fontWeight: '300' }}>
-        Loading trip...
-      </div>
-    </div>
-  );
-
-  if (!trip) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <p style={{ color: 'var(--text-muted)' }}>Trip not found.</p>
-    </div>
-  );
-
-  const totalSpent = expenses.reduce((s, e) => s + (e.amount || 0), 0);
-  const completedChecklist = checklistItems.filter(i => i.isCompleted).length;
-
-  const initialEditData = {
-    name: trip.name || '',
-    description: trip.description || '',
-    startDate: trip.startDate?.slice(0, 10) || '',
-    endDate: trip.endDate?.slice(0, 10) || '',
-    budget: trip.budget?.toString() || '',
-    notes: trip.notes || '',
-  };
+  const sortOrder = { ongoing: 0, upcoming: 1, past: 2 };
+  const sortedTrips = [...trips].sort((a, b) => {
+    const sa = getTripStatus(a.startDate, a.endDate).variant;
+    const sb = getTripStatus(b.startDate, b.endDate).variant;
+    return (sortOrder[sa] ?? 3) - (sortOrder[sb] ?? 3);
+  });
 
   return (
     <div style={{ minHeight: '100vh' }}>
-      <Navbar
-        backTo="/dashboard"
-        backLabel="My Travels"
-        title={trip.name}
-        subtitle={`${trip.startDate?.slice(0,10)} – ${trip.endDate?.slice(0,10)}`}
-      />
+      <Navbar />
 
-      <div style={{
-        borderBottom: '1px solid var(--border-subtle)',
-        background: 'rgba(17,17,24,0.92)',
-        backdropFilter: 'blur(16px)',
-        position: 'sticky', top: '62px', zIndex: 150,
-      }}>
-        <div style={{ maxWidth: '1120px', margin: '0 auto', padding: '0 28px', display: 'flex', gap: '0', overflowX: 'auto' }}>
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.id;
-            let count = null;
-            if (tab.id === 'Destinations') count = destinations.length || null;
-            if (tab.id === 'Activities')   count = activities.length || null;
-            if (tab.id === 'Expenses')     count = expenses.length || null;
-
-            return (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-                padding: '16px 18px', border: 'none', background: 'none', cursor: 'pointer',
-                fontSize: '12px', fontFamily: 'var(--font-body)', fontWeight: '500',
-                letterSpacing: '0.05em', textTransform: 'uppercase',
-                color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)',
-                borderBottom: `2px solid ${isActive ? 'var(--accent-primary)' : 'transparent'}`,
-                transition: 'all var(--transition-fast)',
-                display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap',
-              }}>
-                <span style={{ fontSize: '13px' }}>{tab.icon}</span>
-                {tab.label}
-                {count !== null && (
-                  <span style={{
-                    background: isActive ? 'var(--accent-subtle)' : 'var(--bg-overlay)',
-                    color: isActive ? 'var(--accent-primary)' : 'var(--text-muted)',
-                    border: `1px solid ${isActive ? 'var(--accent-border)' : 'var(--border-subtle)'}`,
-                    borderRadius: '10px', fontSize: '10px', padding: '1px 6px',
-                    fontFamily: 'var(--font-mono)',
-                  }}>{count}</span>
-                )}
-              </button>
-            );
-          })}
+      <main style={{ maxWidth: '1120px', margin: '0 auto', padding: '48px 28px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '44px' }}>
+          <div>
+            <h1 style={{
+              fontFamily: 'var(--font-display)', fontSize: '52px', fontWeight: '300',
+              lineHeight: 1.05, marginBottom: '8px', letterSpacing: '-0.01em',
+            }}>
+              My Travels
+            </h1>
+            <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>
+              {loading ? 'Loading...' : trips.length === 0
+                ? 'Start planning your next adventure'
+                : `${trips.length} trip plan${trips.length !== 1 ? 's' : ''}`}
+            </p>
+          </div>
+          <Button variant="primary" onClick={() => setShowModal(true)}>
+            + New Trip
+          </Button>
         </div>
-      </div>
 
-      <main style={{ maxWidth: '1120px', margin: '0 auto', padding: '36px 28px' }}>
-
-        {activeTab === 'Overview' && (
-          <div style={{ animation: 'fadeIn 0.3s ease' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px', gap: '16px', flexWrap: 'wrap' }}>
-              <div>
-                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '44px', fontWeight: '300', lineHeight: 1.05, marginBottom: '6px' }}>
-                  {trip.name}
-                </h1>
-                <p style={{ color: 'var(--text-muted)', fontSize: '14px', fontFamily: 'var(--font-mono)' }}>
-                  {trip.startDate?.slice(0,10)} – {trip.endDate?.slice(0,10)}
-                </p>
-              </div>
-              <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-                <Button variant="secondary" size="sm" onClick={() => setEditModal(true)}>Edit Trip</Button>
-                <Button variant="danger" size="sm" onClick={handleDelete}>Delete</Button>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '10px', marginBottom: '28px' }}>
-              <StatCard label="Start Date"    value={trip.startDate?.slice(0,10)} icon="📅" />
-              <StatCard label="End Date"      value={trip.endDate?.slice(0,10)}   icon="📅" />
-              {trip.budget != null && <StatCard label="Budget" value={`€ ${trip.budget.toLocaleString()}`} icon="💰" accent />}
-              <StatCard label="Destinations"  value={destinations.length}          icon="🗺" />
-              <StatCard label="Activities"    value={activities.length}             icon="🗓" />
-              <StatCard label="Checklist"     value={`${completedChecklist}/${checklistItems.length}`} icon="✓" />
-              <StatCard label="Total Spent"   value={`€ ${totalSpent.toFixed(2)}`} icon="💳" />
-              {trip.budget != null && (
-                <StatCard
-                  label="Remaining"
-                  value={`€ ${(trip.budget - totalSpent).toFixed(2)}`}
-                  icon="💵"
-                  accent={(trip.budget - totalSpent) >= 0}
+        {loading ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: '16px' }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{ height: '210px', borderRadius: 'var(--radius-lg)' }} className="skeleton" />
+            ))}
+          </div>
+        ) : trips.length === 0 ? (
+          <EmptyState
+            icon="🗺"
+            title="No trips yet"
+            description="Create your first travel plan and start organizing your adventure."
+            action={<Button variant="primary" onClick={() => setShowModal(true)}>+ Create First Trip</Button>}
+          />
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: '16px' }}>
+            {sortedTrips.map((trip, idx) => {
+              const status   = getTripStatus(trip.startDate, trip.endDate);
+              const duration = getTripDuration(trip.startDate, trip.endDate);
+              return (
+                <TripCard
+                  key={trip.id}
+                  trip={trip}
+                  status={status}
+                  duration={duration}
+                  idx={idx}
+                  onView={() => navigate(`/trips/${trip.id}`)}
+                  onDelete={(e) => handleDelete(trip.id, e)}
                 />
-              )}
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {trip.description && (
-                <InfoBlock label="Description">{trip.description}</InfoBlock>
-              )}
-              {trip.notes && (
-                <InfoBlock label="Notes">
-                  <pre style={{ fontFamily: 'var(--font-body)', fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.65, whiteSpace: 'pre-wrap', margin: 0 }}>
-                    {trip.notes}
-                  </pre>
-                </InfoBlock>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'Destinations' && (
-          <div style={{ animation: 'fadeIn 0.3s ease' }}>
-            <SectionTitle title="Destinations" subtitle="All the places you plan to visit on this trip." />
-            <DestinationSection
-              destinations={destinations}
-              tripId={id}
-              onAdded={(d)   => { setDestinations((prev) => [...prev, d]); showToast('Destination added!'); }}
-              onUpdated={(d) => { setDestinations((prev) => prev.map(x => x.id === d.id ? d : x)); showToast('Destination updated!'); }}
-              onDeleted={(did) => { setDestinations((prev) => prev.filter(x => x.id !== did)); showToast('Destination removed.'); }}
-            />
-          </div>
-        )}
-
-        {activeTab === 'Activities' && (
-          <div style={{ animation: 'fadeIn 0.3s ease' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <div>
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '32px', fontWeight: '300', marginBottom: '4px' }}>Activities</h3>
-                <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Plan your daily schedule.</p>
-              </div>
-              <Button variant="accent" onClick={() => setActivityModal(true)}>+ New Activity</Button>
-            </div>
-            <ActivityList
-              activities={activities}
-              tripId={id}
-              onDeleted={(deletedId) => setActivities((prev) => prev.filter(a => a.id !== deletedId))}
-              onUpdated={(updated) => {
-                setActivities((prev) => prev.map(a => a.id === updated.id ? updated : a));
-                showToast('Activity updated!');
-              }}
-            />
-          </div>
-        )}
-
-        {activeTab === 'Checklist' && (
-          <div style={{ animation: 'fadeIn 0.3s ease' }}>
-            <SectionTitle title="Packing List" subtitle="Track items and tasks to complete before your trip." />
-            <ChecklistSection
-              items={checklistItems}
-              tripId={id}
-              onAdded={(item)    => setChecklist((prev) => [...prev, item])}
-              onToggled={(upd)   => setChecklist((prev) => prev.map(i => i.id === upd.id ? upd : i))}
-              onDeleted={(did)   => setChecklist((prev) => prev.filter(i => i.id !== did))}
-            />
-          </div>
-        )}
-
-        {activeTab === 'Expenses' && (
-          <div style={{ animation: 'fadeIn 0.3s ease' }}>
-            <SectionTitle title="Expenses" subtitle="Track your spending and manage your budget." />
-            <ExpenseSection
-              expenses={expenses}
-              tripId={id}
-              budget={trip.budget}
-              onAdded={(e)   => { setExpenses((prev) => [...prev, e]); showToast('Expense added!'); }}
-              onDeleted={(did) => { setExpenses((prev) => prev.filter(e => e.id !== did)); showToast('Expense deleted.'); }}
-            />
-          </div>
-        )}
-
-        {activeTab === 'Share' && (
-          <div style={{ animation: 'fadeIn 0.3s ease' }}>
-            <SectionTitle title="Share Trip" subtitle="Generate a link or QR code to share this trip plan." />
-            <ShareSection tripId={id} />
+              );
+            })}
           </div>
         )}
       </main>
 
-      <Modal open={editModal} onClose={() => setEditModal(false)} title="Edit Trip">
+      <Modal open={showModal} onClose={() => setShowModal(false)} title="New Trip Plan">
         <TripForm
-          initialData={initialEditData}
-          onSubmit={handleEdit}
-          onCancel={() => setEditModal(false)}
-          loading={editLoading}
-        />
-      </Modal>
-
-      <Modal open={activityModal} onClose={() => setActivityModal(false)} title="New Activity">
-        <ActivityForm
-          onSubmit={handleAddActivity}
-          onCancel={() => setActivityModal(false)}
-          loading={activityLoading}
+          onSubmit={handleCreate}
+          onCancel={() => setShowModal(false)}
+          loading={createLoading}
         />
       </Modal>
 
@@ -314,38 +150,67 @@ function TripDetailPage() {
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title="Delete Trip"
-        message="Are you sure you want to delete this entire trip plan? All data will be permanently removed."
+        message="Are you sure you want to delete this trip plan? All destinations, activities, expenses and checklist items will be permanently removed."
         confirmText="Delete"
         cancelText="Cancel"
         variant="danger"
         onConfirm={handleDeleteConfirmed}
-        onCancel={() => setConfirmDialog({ isOpen: false })}
+        onCancel={() => setConfirmDialog({ isOpen: false, id: null })}
       />
     </div>
   );
 }
 
-function SectionTitle({ title, subtitle }) {
+function TripCard({ trip, status, duration, idx, onView, onDelete }) {
   return (
-    <div style={{ marginBottom: '24px' }}>
-      <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '32px', fontWeight: '300', marginBottom: '4px' }}>{title}</h3>
-      {subtitle && <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>{subtitle}</p>}
-    </div>
-  );
-}
-
-function InfoBlock({ label, children }) {
-  return (
-    <div style={{
-      background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
-      borderRadius: 'var(--radius-md)', padding: '18px',
-    }}>
-      <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--text-muted)', marginBottom: '8px' }}>
-        {label}
+    <Card hover style={{ animation: `fadeIn 0.35s ease ${idx * 0.05}s both`, cursor: 'default' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px', gap: '8px' }}>
+        <h3 style={{
+          fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: '400',
+          lineHeight: 1.2, flex: 1, paddingRight: '4px',
+        }}>
+          {trip.name}
+        </h3>
+        <Badge variant={status.variant}>{status.label}</Badge>
       </div>
-      <p style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.65 }}>{children}</p>
-    </div>
+
+      {trip.description && (
+        <p style={{
+          fontSize: '13px', color: 'var(--text-muted)', marginBottom: '14px',
+          display: '-webkit-box', WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: 1.55,
+        }}>
+          {trip.description}
+        </p>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '18px' }}>
+        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ opacity: 0.6 }}>📅</span>
+          <span style={{ fontFamily: 'var(--font-mono)' }}>
+            {trip.startDate?.slice(0, 10)} → {trip.endDate?.slice(0, 10)}
+          </span>
+          {duration && (
+            <span style={{ color: 'var(--text-muted)', fontSize: '11px' }}>({duration})</span>
+          )}
+        </div>
+        {trip.budget != null && (
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ opacity: 0.6 }}>💰</span>
+            <span>Budget: </span>
+            <span style={{ color: 'var(--accent-primary)', fontFamily: 'var(--font-mono)' }}>
+              € {trip.budget.toLocaleString()}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div style={{ display: 'flex', gap: '8px', paddingTop: '14px', borderTop: '1px solid var(--border-subtle)' }}>
+        <Button variant="accent" size="sm" onClick={onView}>View Details →</Button>
+        <Button variant="ghost" size="sm" onClick={onDelete}>Delete</Button>
+      </div>
+    </Card>
   );
 }
 
-export default TripDetailPage;
+export default DashboardPage;

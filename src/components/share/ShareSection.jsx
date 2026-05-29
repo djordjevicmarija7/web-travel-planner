@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import shareService from '../services/shareService';
-import ConfirmDialog from './ui/ConfirmDialog';
-import { Button, Badge, EmptyState } from './ui';
+import shareService from '../../services/shareService';
+import ConfirmDialog from '../common/ConfirmDialog';
+import { Button, Badge, EmptyState } from '../ui';
 
 function ShareSection({ tripId }) {
   const [tokens, setTokens]       = useState([]);

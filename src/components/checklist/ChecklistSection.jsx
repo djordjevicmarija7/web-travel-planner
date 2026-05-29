@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import checklistService from '../services/checklistService';
-import { Button, Input, EmptyState, ProgressBar } from './ui';
+import checklistService from '../../services/checklistService';
+import { Button, Input, EmptyState, ProgressBar } from '../ui';
 
 function ChecklistSection({ items, tripId, onAdded, onToggled, onDeleted }) {
   const [newTitle, setNewTitle] = useState('');

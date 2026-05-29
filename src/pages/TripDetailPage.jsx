@@ -2,16 +2,16 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useServices } from '../context/ServiceContext';
 import { useToast } from '../hooks/useToast';
-import Navbar from '../components/Navbar';
-import TripForm from '../components/TripForm';
-import ActivityForm from '../components/ActivityForm';
-import ActivityList from '../components/ActivityList';
-import DestinationSection from '../components/DestinationSection';
-import ChecklistSection from '../components/ChecklistSection';
-import ExpenseSection from '../components/ExpenseSection';
-import ShareSection from '../components/ShareSection';
-import ConfirmDialog from '../components/ui/ConfirmDialog';
-import Toast from '../components/Toast';
+import Navbar from '../components/common/Navbar';
+import TripForm from '../components/trip/TripForm';
+import ActivityForm from '../components/activity/ActivityForm';
+import ActivityList from '../components/activity/ActivityList';
+import DestinationSection from '../components/destination/DestinationSection';
+import ChecklistSection from '../components/checklist/ChecklistSection';
+import ExpenseSection from '../components/expense/ExpenseSection';
+import ShareSection from '../components/share/ShareSection';
+import ConfirmDialog from '../components/common/ConfirmDialog';
+import Toast from '../components/common/Toast';
 import { Button, Badge, Modal, StatCard, Spinner } from '../components/ui';
 
 const TABS = [

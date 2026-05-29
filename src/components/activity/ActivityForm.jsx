@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Input, Textarea, Select, FormRow } from './ui';
+import { Button, Input, Textarea, Select, FormRow } from '../ui';
 
 const STATUS_OPTIONS = [
   { value: 'planned',   label: 'Planned' },

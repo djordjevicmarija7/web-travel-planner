@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useServices } from '../context/ServiceContext';
 import { useToast } from '../hooks/useToast';
-import Navbar from '../components/Navbar';
-import ConfirmDialog from '../components/ui/ConfirmDialog';
-import Toast from '../components/Toast';
+import Navbar from '../components/common/Navbar';
+import ConfirmDialog from '../components/common/ConfirmDialog';
+import Toast from '../components/common/Toast';
 import { Button, Badge, Spinner } from '../components/ui';
 
 function AdminPage() {

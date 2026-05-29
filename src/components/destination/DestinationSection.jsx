@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import destinationService from '../services/destinationService';
-import ConfirmDialog from './ui/ConfirmDialog';
-import { Button, Input, Textarea, FormRow, Modal, Badge, EmptyState, Card } from './ui';
+import destinationService from '../../services/destinationService';
+import ConfirmDialog from '../common/ConfirmDialog';
+import { Button, Input, Textarea, FormRow, Modal, Badge, EmptyState, Card } from '../ui';
 
 const emptyForm = {
   name: '', location: '', arrivalDate: '', departureDate: '', description: '', notes: '',
