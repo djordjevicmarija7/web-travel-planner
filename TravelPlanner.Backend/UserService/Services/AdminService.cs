@@ -48,7 +48,7 @@ namespace UserService.Services
             {
                 return null;
             }
-            if(dto.Role!="user" && dto.Role != "admin")
+            if(dto.Role!=Enums.UserRole.user && dto.Role != Enums.UserRole.admin)
             {
                 throw new ArgumentException("Role must be 'user' or 'admin'.");
             }

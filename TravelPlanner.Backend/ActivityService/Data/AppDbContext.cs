@@ -15,6 +15,9 @@ namespace ActivityService.Data
                 .HasPrecision(18, 2);
             modelBuilder.Entity<Activity>()
                 .HasIndex(a => a.TripId);
+            modelBuilder.Entity<Activity>()
+                .Property(a => a.Status)
+                .HasConversion<int>();
         }
 
     }

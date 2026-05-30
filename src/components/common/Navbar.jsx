@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { Button, Badge } from './ui';
-
+import { useAuth } from '../../context/AuthContext';
+import { Button, Badge } from '../ui';
+import {UserRole} from '../../enums/user/UserRole'
 function Navbar({ backTo, backLabel, title, subtitle }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -88,9 +88,9 @@ function Navbar({ backTo, backLabel, title, subtitle }) {
                   {user.name?.charAt(0).toUpperCase()}
                 </div>
                 <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{user.name}</span>
-                {user.role === 'admin' && <Badge variant="admin">Admin</Badge>}
+                {user.role === UserRole.admin  && <Badge variant="admin">Admin</Badge>}
               </div>
-              {user.role === 'admin' && (
+              {user.role === UserRole.admin && (
                 <Button size="sm" variant="accent" onClick={() => navigate('/admin')}>
                   Admin Panel
                 </Button>

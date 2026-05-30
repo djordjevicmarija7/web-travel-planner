@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import shareService from '../../services/shareService';
-import ConfirmDialog from '../common/ConfirmDialog';
 import { Button, Badge, EmptyState } from '../ui';
 
 function ShareSection({ tripId }) {
@@ -10,7 +9,6 @@ function ShareSection({ tripId }) {
   const [error, setError]         = useState('');
   const [selectedQr, setSelectedQr] = useState(null);
   const [copied, setCopied]       = useState(null);
-  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
 
   useEffect(() => { fetchTokens(); }, [tripId]);
 
@@ -29,13 +27,8 @@ function ShareSection({ tripId }) {
     } catch { setError('Error creating link.'); } finally { setLoading(false); }
   }
 
-  function handleRevoke(tokenId) {
-    setConfirmDialog({ isOpen: true, id: tokenId });
-  }
-
-  async function handleRevokeConfirmed() {
-    const tokenId = confirmDialog.id;
-    setConfirmDialog({ isOpen: false, id: null });
+  async function handleRevoke(tokenId) {
+    if (!window.confirm('Deactivate this share link?')) return;
     try {
       await shareService.revokeToken(tripId, tokenId);
       setTokens((prev) => prev.filter((t) => t.id !== tokenId));
@@ -63,6 +56,7 @@ function ShareSection({ tripId }) {
         }}>{error}</div>
       )}
 
+      {/* Create buttons */}
       <div style={{
         background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
         borderRadius: 'var(--radius-lg)', padding: '20px', marginBottom: '24px',
@@ -80,6 +74,7 @@ function ShareSection({ tripId }) {
         </div>
       </div>
 
+      {/* Token list */}
       {tokens.length === 0 ? (
         <EmptyState
           icon="🔗"
@@ -119,6 +114,7 @@ function ShareSection({ tripId }) {
                 </div>
               </div>
 
+              {/* URL preview */}
               <div style={{
                 marginTop: '12px', padding: '8px 12px',
                 background: 'var(--bg-surface)', borderRadius: 'var(--radius-sm)',
@@ -128,6 +124,7 @@ function ShareSection({ tripId }) {
                 {buildShareUrl(token.token)}
               </div>
 
+              {/* QR Code */}
               {selectedQr?.id === token.id && (
                 <div style={{
                   marginTop: '16px', display: 'flex', flexDirection: 'column',
@@ -145,17 +142,6 @@ function ShareSection({ tripId }) {
           ))}
         </div>
       )}
-
-      <ConfirmDialog
-        isOpen={confirmDialog.isOpen}
-        title="Revoke Share Link"
-        message="Are you sure you want to deactivate this share link? Anyone using it will lose access."
-        confirmText="Revoke"
-        cancelText="Cancel"
-        variant="danger"
-        onConfirm={handleRevokeConfirmed}
-        onCancel={() => setConfirmDialog({ isOpen: false, id: null })}
-      />
     </div>
   );
 }

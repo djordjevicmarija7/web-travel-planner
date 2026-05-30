@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using PlanningService.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace PlanningService.Models
 {
@@ -7,7 +8,7 @@ namespace PlanningService.Models
         public int Id { get; set; }
         [Required]
         public string Name { get; set; } = string.Empty;
-        public string Category { get; set; } = "other";
+        public ExpenseCategory Category { get; set; } = ExpenseCategory.other;
         [Required]
         public decimal Amount { get; set; }
         [Required]

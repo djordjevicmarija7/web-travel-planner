@@ -30,6 +30,9 @@ namespace TravelService.Data
             modelBuilder.Entity<ShareToken>()
                 .HasIndex(st => st.Token)
                 .IsUnique();
+            modelBuilder.Entity<ShareToken>()
+                .Property(t => t.AccessType)
+                .HasConversion<int>();
         }
     }
 }

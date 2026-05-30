@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Button, Input } from '../components/ui';
+import {UserRole} from '../enums/user/UserRole';
 
 function LoginPage() {
   const { login }   = useAuth();
@@ -33,7 +34,7 @@ function LoginPage() {
     setErrors({}); setLoading(true);
     try {
       const loggedUser = await login(formData.email, formData.password);
-      navigate(loggedUser?.role === 'admin' ? '/admin' : '/dashboard');
+      navigate(loggedUser?.role === UserRole.admin ? '/admin' : '/dashboard');
     } catch {
       setServerError('Incorrect email or password.');
     } finally { setLoading(false); }

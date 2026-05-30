@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { Button, Input, Textarea, Select, FormRow } from '../ui';
+import { ActivityStatus } from '../../enums/activity/ActivityStatus';
 
 const STATUS_OPTIONS = [
-  { value: 'planned',   label: 'Planned' },
-  { value: 'reserved',  label: 'Reserved' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' },
+  { value: ActivityStatus.planned,   label: 'Planned' },
+  { value: ActivityStatus.reserved,  label: 'Reserved' },
+  { value: ActivityStatus.completed, label: 'Completed' },
+  { value: ActivityStatus.cancelled, label: 'Cancelled' },
 ];
 
 const emptyForm = {
   name: '', date: '', time: '', location: '',
-  description: '', estimatedCost: '', status: 'planned',
+  description: '', estimatedCost: '', status: ActivityStatus.planned,
 };
 
 function ActivityForm({ initialData, onSubmit, onCancel, loading }) {

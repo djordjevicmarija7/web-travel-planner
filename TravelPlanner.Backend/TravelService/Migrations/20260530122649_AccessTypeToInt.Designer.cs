@@ -12,8 +12,8 @@ using TravelService.Data;
 namespace TravelService.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260514114109_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260530122649_AccessTypeToInt")]
+    partial class AccessTypeToInt
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -62,6 +62,43 @@ namespace TravelService.Migrations
                     b.ToTable("Destinations");
                 });
 
+            modelBuilder.Entity("TravelService.Models.ShareToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccessType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("TripId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("TripId");
+
+                    b.ToTable("ShareTokens");
+                });
+
             modelBuilder.Entity("TravelService.Models.Trip", b =>
                 {
                     b.Property<int>("Id")
@@ -105,6 +142,17 @@ namespace TravelService.Migrations
                 {
                     b.HasOne("TravelService.Models.Trip", "Trip")
                         .WithMany("Destinations")
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Trip");
+                });
+
+            modelBuilder.Entity("TravelService.Models.ShareToken", b =>
+                {
+                    b.HasOne("TravelService.Models.Trip", "Trip")
+                        .WithMany()
                         .HasForeignKey("TripId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();

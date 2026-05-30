@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Input, Textarea, FormRow } from './ui';
+import { Button, Input, Textarea, FormRow } from '../ui';
 
 const emptyForm = {
   name: '', description: '', startDate: '', endDate: '', budget: '', notes: '',

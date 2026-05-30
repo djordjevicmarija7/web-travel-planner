@@ -4,9 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { useServices } from '../context/ServiceContext';
 import { useToast } from '../hooks/useToast';
 import Navbar from '../components/common/Navbar';
-import ConfirmDialog from '../components/common/ConfirmDialog';
 import Toast from '../components/common/Toast';
 import { Button, Badge, Spinner } from '../components/ui';
+import { UserRole } from '../enums/user/UserRole';
 
 function AdminPage() {
   const { adminService } = useServices();
@@ -16,10 +16,9 @@ function AdminPage() {
 
   const [users, setUsers]   = useState([]);
   const [loading, setLoading] = useState(true);
-  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null, type: null, newRole: null });
 
   useEffect(() => {
-    if (user?.role !== 'admin') { navigate('/dashboard'); return; }
+    if (user?.role !== UserRole.admin) { navigate('/dashboard'); return; }
     fetchUsers();
   }, []);
 
@@ -32,14 +31,9 @@ function AdminPage() {
     finally { setLoading(false); }
   }
 
-  function handleRoleChange(id, currentRole) {
-    const newRole = currentRole === 'admin' ? 'user' : 'admin';
-    setConfirmDialog({ isOpen: true, id, type: 'role', newRole });
-  }
-
-  async function handleRoleChangeConfirmed() {
-    const { id, newRole } = confirmDialog;
-    setConfirmDialog({ isOpen: false, id: null, type: null, newRole: null });
+  async function handleRoleChange(id, currentRole) {
+    const newRole = currentRole === UserRole.admin ? UserRole.user : UserRole.admin;
+    if (!window.confirm(`Change role to "${newRole}"?`)) return;
     try {
       const updated = await adminService.updateRole(id, newRole);
       setUsers((prev) => prev.map(u => u.id === id ? updated : u));
@@ -47,13 +41,8 @@ function AdminPage() {
     } catch { showToast('Error changing role.', 'error'); }
   }
 
-  function handleDelete(id) {
-    setConfirmDialog({ isOpen: true, id, type: 'delete', newRole: null });
-  }
-
-  async function handleDeleteConfirmed() {
-    const { id } = confirmDialog;
-    setConfirmDialog({ isOpen: false, id: null, type: null, newRole: null });
+  async function handleDelete(id) {
+    if (!window.confirm('Permanently delete this user and all their data?')) return;
     try {
       await adminService.deleteUser(id);
       setUsers((prev) => prev.filter(u => u.id !== id));
@@ -61,14 +50,12 @@ function AdminPage() {
     } catch { showToast('Error deleting user.', 'error'); }
   }
 
-  const isDeleteDialog = confirmDialog.type === 'delete';
-  const isRoleDialog   = confirmDialog.type === 'role';
-
   return (
     <div style={{ minHeight: '100vh' }}>
       <Navbar backTo="/dashboard" backLabel="Dashboard" title="Admin Panel" />
 
       <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '48px 28px' }}>
+        {/* Page header */}
         <div style={{ marginBottom: '40px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
             <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '44px', fontWeight: '300' }}>
@@ -81,11 +68,12 @@ function AdminPage() {
           </p>
         </div>
 
+        {/* Stats row */}
         <div style={{ display: 'flex', gap: '12px', marginBottom: '28px', flexWrap: 'wrap' }}>
           {[
             { label: 'Total Users', value: users.length },
-            { label: 'Admins', value: users.filter(u => u.role === 'admin').length },
-            { label: 'Regular Users', value: users.filter(u => u.role !== 'admin').length },
+            { label: 'Admins', value: users.filter(u => u.role === UserRole.admin).length },
+            { label: 'Regular Users', value: users.filter(u => u.role !== UserRole.admin).length },
           ].map((stat) => (
             <div key={stat.label} style={{
               background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
@@ -97,6 +85,7 @@ function AdminPage() {
           ))}
         </div>
 
+        {/* Table */}
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '48px', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
             <Spinner size={28} />
@@ -109,6 +98,7 @@ function AdminPage() {
             background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-lg)', overflow: 'hidden',
           }}>
+            {/* Table header */}
             <div style={{
               display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr auto',
               padding: '12px 20px', borderBottom: '1px solid var(--border-subtle)',
@@ -121,6 +111,7 @@ function AdminPage() {
               ))}
             </div>
 
+            {/* Rows */}
             {users.map((u, idx) => (
               <div key={u.id}
                 style={{
@@ -132,6 +123,7 @@ function AdminPage() {
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-elevated)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
+                {/* Name + avatar */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <div style={{
                     width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
@@ -155,11 +147,12 @@ function AdminPage() {
                   {u.createdAt?.slice(0, 10)}
                 </span>
 
+                {/* Actions */}
                 <div style={{ display: 'flex', gap: '6px' }}>
                   {u.id !== user?.id ? (
                     <>
                       <Button size="xs" variant="ghost" onClick={() => handleRoleChange(u.id, u.role)}>
-                        {u.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
+                        {u.role === UserRole.admin ? 'Remove Admin' : 'Make Admin'}
                       </Button>
                       <Button size="xs" variant="danger" onClick={() => handleDelete(u.id)}>Delete</Button>
                     </>
@@ -174,32 +167,6 @@ function AdminPage() {
       </main>
 
       <Toast toast={toast} />
-
-      <ConfirmDialog
-        isOpen={confirmDialog.isOpen && isDeleteDialog}
-        title="Delete User"
-        message="Are you sure you want to permanently delete this user and all their data? This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
-        variant="danger"
-        onConfirm={handleDeleteConfirmed}
-        onCancel={() => setConfirmDialog({ isOpen: false, id: null, type: null, newRole: null })}
-      />
-
-      <ConfirmDialog
-        isOpen={confirmDialog.isOpen && isRoleDialog}
-        title={confirmDialog.newRole === 'admin' ? 'Make Admin' : 'Remove Admin'}
-        message={
-          confirmDialog.newRole === 'admin'
-            ? 'Are you sure you want to grant admin privileges to this user?'
-            : 'Are you sure you want to remove admin privileges from this user?'
-        }
-        confirmText={confirmDialog.newRole === 'admin' ? 'Make Admin' : 'Remove Admin'}
-        cancelText="Cancel"
-        variant="warning"
-        onConfirm={handleRoleChangeConfirmed}
-        onCancel={() => setConfirmDialog({ isOpen: false, id: null, type: null, newRole: null })}
-      />
     </div>
   );
 }

@@ -8,11 +8,11 @@ namespace ActivityService.Controllers
     [ApiController]
     [Route("api/trips/{tripId}/activities")]
     [Authorize]
-    public class ActivityServiceControllercs : ControllerBase
+    public class ActivityServiceController : ControllerBase
     {
         private readonly IActivityService _activityService;
 
-        public ActivityServiceControllercs(IActivityService activityService)
+        public ActivityServiceController(IActivityService activityService)
         {
             _activityService = activityService;
         }

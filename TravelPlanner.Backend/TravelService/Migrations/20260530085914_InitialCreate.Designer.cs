@@ -12,8 +12,8 @@ using TravelService.Data;
 namespace TravelService.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260521115921_AddShareTokens")]
-    partial class AddShareTokens
+    [Migration("20260530085914_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using ActivityService.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace ActivityService.DTOs
 {
@@ -14,6 +15,6 @@ namespace ActivityService.DTOs
         public string? Location { get; set; }
         public string? Description { get; set; }
         public decimal? EstimatedCost { get; set; }
-        public string Status { get; set; } = "planned";
+        public ActivityStatus Status { get; set; } = ActivityStatus.planned;
     }
 }

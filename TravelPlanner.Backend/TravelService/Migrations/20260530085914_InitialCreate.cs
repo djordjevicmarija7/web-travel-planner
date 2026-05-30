@@ -56,9 +56,44 @@ namespace TravelService.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "ShareTokens",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Token = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    AccessType = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TripId = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ShareTokens", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ShareTokens_Trips_TripId",
+                        column: x => x.TripId,
+                        principalTable: "Trips",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_Destinations_TripId",
                 table: "Destinations",
+                column: "TripId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ShareTokens_Token",
+                table: "ShareTokens",
+                column: "Token",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ShareTokens_TripId",
+                table: "ShareTokens",
                 column: "TripId");
         }
 
@@ -67,6 +102,9 @@ namespace TravelService.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Destinations");
+
+            migrationBuilder.DropTable(
+                name: "ShareTokens");
 
             migrationBuilder.DropTable(
                 name: "Trips");

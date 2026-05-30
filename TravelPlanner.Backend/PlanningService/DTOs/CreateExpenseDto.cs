@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using PlanningService.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace PlanningService.DTOs
 {
@@ -6,7 +7,7 @@ namespace PlanningService.DTOs
     {
         [Required]
         public string Name { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
+        public ExpenseCategory Category { get; set; } = ExpenseCategory.other;
         [Required]
         [Range(0.01, double.MaxValue, ErrorMessage = "Amount must be greater then 0.")]
         public decimal Amount { get; set; }

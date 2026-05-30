@@ -6,7 +6,7 @@ import DashboardPage  from './pages/DashboardPage';
 import TripDetailPage from './pages/TripDetailPage';
 import AdminPage      from './pages/AdminPage';
 import SharedTripPage from './pages/SharedTripPage';
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 function App() {
   return (

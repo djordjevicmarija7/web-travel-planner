@@ -21,7 +21,7 @@ namespace TravelService.Services
             {
                 throw new InvalidOperationException("Travel plan not found.");
             }
-            if(dto.AccessType!="view" && dto.AccessType != "edit")
+            if(dto.AccessType!=Enums.TokenAccessType.view && dto.AccessType != Enums.TokenAccessType.edit)
             {
                 throw new ArgumentException("Access type must be 'view' or 'edit'.");
             }

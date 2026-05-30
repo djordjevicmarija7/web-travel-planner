@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using TravelService.Enums;
 
 namespace TravelService.DTOs
 {
     public class CreateShareTokenDto
     {
         [Required]
-        public string AccessType { get; set; } = "view";
+        public TokenAccessType AccessType { get; set; } = TokenAccessType.view;
     }
 }

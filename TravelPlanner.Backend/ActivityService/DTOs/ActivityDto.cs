@@ -1,4 +1,6 @@
-﻿namespace ActivityService.DTOs
+﻿using ActivityService.Enums;
+
+namespace ActivityService.DTOs
 {
     public class ActivityDto
     {
@@ -9,7 +11,7 @@
         public string? Location { get; set; }
         public string? Description { get; set; }
         public decimal? EstimatedCost { get; set; }
-        public string Status { get; set; } = "planned";
+        public ActivityStatus Status { get; set; } = ActivityStatus.planned;
         public int TripId { get; set; }
     }
 }

@@ -16,11 +16,14 @@ namespace PlanningService.Data
             modelBuilder.Entity<Expense>()
                 .Property(e => e.Amount)
                 .HasPrecision(18, 2);
-
+            
             modelBuilder.Entity<ChecklistItem>()
                 .HasIndex(c => c.TripId);
             modelBuilder.Entity<Expense>()
                 .HasIndex(e => e.TripId);
+            modelBuilder.Entity<Expense>()
+                .Property(e => e.Category)
+                .HasConversion<int>();
         }
     }
 }

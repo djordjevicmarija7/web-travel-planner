@@ -1,25 +1,23 @@
 import { useState } from 'react';
 import expenseService from '../../services/expenseService';
-import ConfirmDialog from '../common/ConfirmDialog';
 import { Button, Input, Textarea, Select, FormRow, Modal, EmptyState, ProgressBar } from '../ui';
-
+import {ExpenseCategory} from '../../enums/expense/ExpenseCategory'
 const CATEGORIES = [
-  { value: 'transport',      label: 'Transport',      icon: '✈' },
-  { value: 'accommodation',  label: 'Accommodation',  icon: '🏨' },
-  { value: 'food',           label: 'Food & Drink',   icon: '🍽' },
-  { value: 'tickets',        label: 'Tickets',        icon: '🎟' },
-  { value: 'shopping',       label: 'Shopping',       icon: '🛍' },
-  { value: 'other',          label: 'Other',          icon: '📌' },
+  { value: ExpenseCategory.transport,      label: 'Transport',      icon: '✈' },
+  { value: ExpenseCategory.accommodation,  label: 'Accommodation',  icon: '🏨' },
+  { value: ExpenseCategory.food,           label: 'Food & Drink',   icon: '🍽' },
+  { value: ExpenseCategory.tickets,        label: 'Tickets',        icon: '🎟' },
+  { value: ExpenseCategory.shopping,       label: 'Shopping',       icon: '🛍' },
+  { value: ExpenseCategory.other,          label: 'Other',          icon: '📌' },
 ];
 
-const emptyForm = { name: '', category: 'other', amount: '', date: '', description: '' };
+const emptyForm = { name: '', category: ExpenseCategory.other, amount: '', date: '', description: '' };
 
 function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
   const [formData, setFormData] = useState(emptyForm);
   const [errors, setErrors]     = useState({});
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading]   = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
 
   const totalSpent = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
   const remaining  = budget != null ? budget - totalSpent : null;
@@ -57,13 +55,8 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
     } catch { alert('Error adding expense.'); } finally { setLoading(false); }
   }
 
-  function handleDelete(id) {
-    setConfirmDialog({ isOpen: true, id });
-  }
-
-  async function handleDeleteConfirmed() {
-    const id = confirmDialog.id;
-    setConfirmDialog({ isOpen: false, id: null });
+  async function handleDelete(id) {
+    if (!window.confirm('Delete this expense?')) return;
     try { await expenseService.remove(tripId, id); onDeleted(id); }
     catch { alert('Error deleting expense.'); }
   }
@@ -103,6 +96,7 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
         </div>
         {budget != null && <ProgressBar value={totalSpent} max={budget} />}
 
+        {/* Category breakdown */}
         {expenses.length > 0 && (
           <div style={{ marginTop: '18px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '10px' }}>
@@ -128,12 +122,14 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
         )}
       </div>
 
+      {/* Add button */}
       <div style={{ marginBottom: '18px' }}>
         <Button variant="accent" onClick={() => setShowModal(true)}>
           + Add Expense
         </Button>
       </div>
 
+      {/* Expense list */}
       {expenses.length === 0 ? (
         <EmptyState
           icon="💳"
@@ -216,17 +212,6 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
           </div>
         </form>
       </Modal>
-
-      <ConfirmDialog
-        isOpen={confirmDialog.isOpen}
-        title="Delete Expense"
-        message="Are you sure you want to delete this expense? This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
-        variant="danger"
-        onConfirm={handleDeleteConfirmed}
-        onCancel={() => setConfirmDialog({ isOpen: false, id: null })}
-      />
     </div>
   );
 }

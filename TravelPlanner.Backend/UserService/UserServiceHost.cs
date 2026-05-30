@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using UserService.Data;
 using UserService.Services;
+using System.Text.Json.Serialization;
 
 namespace UserService
 {
@@ -55,7 +56,11 @@ namespace UserService
                             });
 
                         builder.Services.AddAuthorization();
-                        builder.Services.AddControllers();
+                        builder.Services.AddControllers()
+                            .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
                         builder.Services.AddCors(options =>
                         {
                             options.AddPolicy("AllowFrontend", policy =>

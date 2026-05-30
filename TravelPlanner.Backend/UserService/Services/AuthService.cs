@@ -54,7 +54,7 @@ namespace UserService.Services
                 Name = dto.Name,
                 Email = dto.Email,
                 PasswordHash = passwordHash,
-                Role = "user"
+                Role = Enums.UserRole.user
             };
 
             _context.Users.Add(user);
@@ -76,7 +76,7 @@ namespace UserService.Services
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role),
+                new Claim(ClaimTypes.Role, user.Role.ToString()),
                 new Claim(ClaimTypes.Name, user.Name)
             };
 

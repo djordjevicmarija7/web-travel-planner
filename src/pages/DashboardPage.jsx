@@ -5,7 +5,6 @@ import { useServices } from '../context/ServiceContext';
 import { useToast } from '../hooks/useToast';
 import Navbar from '../components/common/Navbar';
 import TripForm from '../components/trip/TripForm';
-import ConfirmDialog from '../components/common/ConfirmDialog';
 import Toast from '../components/common/Toast';
 import { Button, Card, Badge, EmptyState, Modal, Spinner } from '../components/ui';
 
@@ -33,7 +32,6 @@ function DashboardPage() {
   const [loading, setLoading]       = useState(true);
   const [showModal, setShowModal]   = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
 
   useEffect(() => { fetchTrips(); }, []);
 
@@ -57,14 +55,9 @@ function DashboardPage() {
     finally { setCreateLoading(false); }
   }
 
-  function handleDelete(id, e) {
+  async function handleDelete(id, e) {
     e.stopPropagation();
-    setConfirmDialog({ isOpen: true, id });
-  }
-
-  async function handleDeleteConfirmed() {
-    const { id } = confirmDialog;
-    setConfirmDialog({ isOpen: false, id: null });
+    if (!window.confirm('Delete this trip plan? This will also delete all destinations, activities, expenses and checklist items.')) return;
     try {
       await tripService.remove(id);
       setTrips((prev) => prev.filter((t) => t.id !== id));
@@ -72,6 +65,7 @@ function DashboardPage() {
     } catch { showToast('Error deleting trip.', 'error'); }
   }
 
+  // Sort: ongoing first, then upcoming, then past
   const sortOrder = { ongoing: 0, upcoming: 1, past: 2 };
   const sortedTrips = [...trips].sort((a, b) => {
     const sa = getTripStatus(a.startDate, a.endDate).variant;
@@ -84,6 +78,7 @@ function DashboardPage() {
       <Navbar />
 
       <main style={{ maxWidth: '1120px', margin: '0 auto', padding: '48px 28px' }}>
+        {/* Page header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '44px' }}>
           <div>
             <h1 style={{
@@ -103,6 +98,7 @@ function DashboardPage() {
           </Button>
         </div>
 
+        {/* Trips grid */}
         {loading ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))', gap: '16px' }}>
             {[1, 2, 3].map(i => (
@@ -137,6 +133,7 @@ function DashboardPage() {
         )}
       </main>
 
+      {/* Create Modal */}
       <Modal open={showModal} onClose={() => setShowModal(false)} title="New Trip Plan">
         <TripForm
           onSubmit={handleCreate}
@@ -146,17 +143,6 @@ function DashboardPage() {
       </Modal>
 
       <Toast toast={toast} />
-
-      <ConfirmDialog
-        isOpen={confirmDialog.isOpen}
-        title="Delete Trip"
-        message="Are you sure you want to delete this trip plan? All destinations, activities, expenses and checklist items will be permanently removed."
-        confirmText="Delete"
-        cancelText="Cancel"
-        variant="danger"
-        onConfirm={handleDeleteConfirmed}
-        onCancel={() => setConfirmDialog({ isOpen: false, id: null })}
-      />
     </div>
   );
 }
@@ -164,6 +150,7 @@ function DashboardPage() {
 function TripCard({ trip, status, duration, idx, onView, onDelete }) {
   return (
     <Card hover style={{ animation: `fadeIn 0.35s ease ${idx * 0.05}s both`, cursor: 'default' }}>
+      {/* Header row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px', gap: '8px' }}>
         <h3 style={{
           fontFamily: 'var(--font-display)', fontSize: '22px', fontWeight: '400',
@@ -174,6 +161,7 @@ function TripCard({ trip, status, duration, idx, onView, onDelete }) {
         <Badge variant={status.variant}>{status.label}</Badge>
       </div>
 
+      {/* Description */}
       {trip.description && (
         <p style={{
           fontSize: '13px', color: 'var(--text-muted)', marginBottom: '14px',
@@ -184,6 +172,7 @@ function TripCard({ trip, status, duration, idx, onView, onDelete }) {
         </p>
       )}
 
+      {/* Meta info */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '18px' }}>
         <div style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span style={{ opacity: 0.6 }}>📅</span>
@@ -205,6 +194,7 @@ function TripCard({ trip, status, duration, idx, onView, onDelete }) {
         )}
       </div>
 
+      {/* Actions */}
       <div style={{ display: 'flex', gap: '8px', paddingTop: '14px', borderTop: '1px solid var(--border-subtle)' }}>
         <Button variant="accent" size="sm" onClick={onView}>View Details →</Button>
         <Button variant="ghost" size="sm" onClick={onDelete}>Delete</Button>

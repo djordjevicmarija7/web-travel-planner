@@ -1,7 +1,9 @@
-﻿namespace UserService.DTOs
+﻿using UserService.Enums;
+
+namespace UserService.DTOs
 {
     public class UpdateRoleDto
     {
-        public string Role { get; set; } = string.Empty;
+        public UserRole Role { get; set; } = UserRole.user;
     }
 }

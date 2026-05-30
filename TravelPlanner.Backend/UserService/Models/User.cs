@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using UserService.Enums;
 
 namespace UserService.Models
 {
@@ -16,7 +17,7 @@ namespace UserService.Models
         [Required]
         public string PasswordHash { get; set; } = string.Empty;
 
-        public string Role { get; set; } = "user"; 
+        public UserRole Role { get; set; } = UserRole.user;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
