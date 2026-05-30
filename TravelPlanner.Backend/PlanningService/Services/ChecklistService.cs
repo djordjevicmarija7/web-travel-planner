@@ -103,6 +103,13 @@ namespace PlanningService.Services
             await tx.CommitAsync();
             return ChecklistItemMapper.MapToDto(item);
         }
-
+        public async Task DeleteAllByTripAsync(int tripId)
+        {
+            var items = await _context.ChecklistItems
+                .Where(c => c.TripId == tripId)
+                .ToListAsync();
+            _context.ChecklistItems.RemoveRange(items);
+            await _context.SaveChangesAsync();
+        }
     }
 }

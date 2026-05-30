@@ -90,5 +90,12 @@ namespace TravelService.Controllers
             }
             return NoContent();
         }
+        [HttpDelete("user/{userId}/all")]
+        [AllowAnonymous] 
+        public async Task<IActionResult> DeleteAllByUser(int userId)
+        {
+            await _tripService.DeleteAllByUserAsync(userId);
+            return NoContent();
+        }
     }
 }

@@ -8,10 +8,12 @@ namespace TravelService.Services
     public class TripService : ITripService
     {
         private readonly AppDbContext _context;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public TripService(AppDbContext context)
+        public TripService(AppDbContext context, IHttpClientFactory httpClientFactory)
         {
             _context = context;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<TripDto> CreateAsync(CreateTripDto dto, int userId)
@@ -44,10 +46,14 @@ namespace TravelService.Services
             var trip = await _context.Trips
                 .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
 
-            if (trip == null)
-                return false;
+            if (trip == null) return false;
+
             _context.Trips.Remove(trip);
             await _context.SaveChangesAsync();
+
+            var client = _httpClientFactory.CreateClient();
+            await client.DeleteAsync($"http://localhost:5003/api/trips/{id}/all");
+            await client.DeleteAsync($"http://localhost:5004/api/trips/{id}/all");
 
             return true;
         }
@@ -121,6 +127,22 @@ namespace TravelService.Services
                     TripId = d.TripId
                 }).ToList()
             };
+        }
+        public async Task DeleteAllByUserAsync(int userId)
+        {
+            var trips = await _context.Trips
+                .Where(t => t.UserId == userId)
+                .ToListAsync();
+
+            var client = _httpClientFactory.CreateClient();
+            foreach (var trip in trips)
+            {
+                await client.DeleteAsync($"http://localhost:5003/api/trips/{trip.Id}/all");
+                await client.DeleteAsync($"http://localhost:5004/api/trips/{trip.Id}/all");
+            }
+
+            _context.Trips.RemoveRange(trips);
+            await _context.SaveChangesAsync();
         }
     }
 }

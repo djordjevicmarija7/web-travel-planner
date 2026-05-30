@@ -12,6 +12,7 @@ import ExpenseSection from '../components/expense/ExpenseSection';
 import ShareSection from '../components/share/ShareSection';
 import Toast from '../components/common/Toast';
 import { Button, Modal, StatCard, Spinner } from '../components/ui';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 
 const TABS = [
   { id: 'Overview',     icon: '◎',  label: 'Overview' },
@@ -39,6 +40,7 @@ function TripDetailPage() {
   const [editLoading, setEditLoading]     = useState(false);
   const [activityModal, setActivityModal] = useState(false);
   const [activityLoading, setActivityLoading] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false });
 
   useEffect(() => { fetchAll(); }, [id]);
 
@@ -71,8 +73,12 @@ function TripDetailPage() {
     finally { setEditLoading(false); }
   }
 
-  async function handleDelete() {
-    if (!window.confirm('Delete this entire trip plan? All data will be permanently removed.')) return;
+  function handleDelete() {
+    setConfirmDialog({ isOpen: true });
+  }
+ 
+  async function handleDeleteConfirmed() {
+    setConfirmDialog({ isOpen: false });
     try { await tripService.remove(id); navigate('/dashboard'); }
     catch { showToast('Error deleting trip.', 'error'); }
   }
@@ -264,7 +270,7 @@ function TripDetailPage() {
         {activeTab === 'Share' && (
           <div style={{ animation: 'fadeIn 0.3s ease' }}>
             <SectionTitle title="Share Trip" subtitle="Generate a link or QR code to share this trip plan." />
-            <ShareSection tripId={id} />
+            <ShareSection tripId={id}  trip={trip}/>
           </div>
         )}
       </main>
@@ -278,6 +284,16 @@ function TripDetailPage() {
       </Modal>
 
       <Toast toast={toast} />
+            <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="Delete Trip"
+        message="Are you sure you want to delete this entire trip plan? All data will be permanently removed."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setConfirmDialog({ isOpen: false })}
+      />
     </div>
   );
 }

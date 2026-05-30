@@ -5,6 +5,8 @@ import sharedEditService from '../services/sharedEditService';
 import { Badge, Button, Input, EmptyState, Modal, ProgressBar } from '../components/ui';
 import ActivityForm from '../components/activity/ActivityForm';
 import { ExpenseCategory } from '../enums/expense/ExpenseCategory';
+import ConfirmDialog from '../components/common/ConfirmDialog';
+import { generateTripPdf } from '../utils/generateTripPdf';
 
 const STATUS_LABELS = { planned: 'Planned', reserved: 'Reserved', completed: 'Completed', cancelled: 'Cancelled' };
 const STATUS_COLORS = {
@@ -37,6 +39,8 @@ function SharedTripPage() {
   const [editTarget, setEditTarget] = useState(null);
   const [newCheckItem, setNewCheckItem] = useState('');
   const [checkLoading, setCheckLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
 
   useEffect(() => { fetchSharedTrip(); }, [token]);
 
@@ -71,12 +75,15 @@ function SharedTripPage() {
     finally { setActivityLoading(false); }
   }
 
-  async function handleDeleteActivity(id) {
-    if (!window.confirm('Delete this activity?')) return;
-    try {
-      await sharedEditService.deleteActivity(token, id);
-      setActivities(prev => prev.filter(a => a.id !== id));
-    } catch { alert('Error deleting activity.'); }
+  function handleDeleteActivity(id) {
+    setConfirmDialog({ isOpen: true, id });
+  }
+
+  async function handleDeleteActivityConfirmed() {
+    const id = confirmDialog.id;
+    setConfirmDialog({ isOpen: false, id: null });
+    try { await sharedEditService.deleteActivity(token, id); setActivities(prev => prev.filter(a => a.id !== id)); }
+    catch { alert('Error deleting activity.'); }
   }
 
   async function handleAddCheckItem(e) {
@@ -103,6 +110,20 @@ function SharedTripPage() {
       await sharedEditService.deleteChecklistItem(token, id);
       setChecklist(prev => prev.filter(i => i.id !== id));
     } catch { alert('Error deleting item.'); }
+  }
+
+  function handleDownloadPdf() {
+    if (!data?.trip) return;
+    setPdfLoading(true);
+    try {
+      generateTripPdf({
+        ...data.trip,
+        activities,
+        checklist,
+      });
+    } finally {
+      setPdfLoading(false);
+    }
   }
 
   if (loading) return (
@@ -183,13 +204,41 @@ function SharedTripPage() {
         {/* ── OVERVIEW ── */}
         {activeTab === 'Overview' && (
           <div style={{ animation: 'fadeIn 0.3s ease' }}>
-            <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '48px', fontWeight: '300', lineHeight: 1.05, marginBottom: '6px' }}>{trip.name}</h1>
-            <p style={{ color: 'var(--text-muted)', fontSize: '13px', fontFamily: 'var(--font-mono)', marginBottom: '32px' }}>
-              {trip.startDate?.slice(0,10)} – {trip.endDate?.slice(0,10)}
-            </p>
+            {/* Title row + PDF button */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px', gap: '16px', flexWrap: 'wrap' }}>
+              <div>
+                <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '48px', fontWeight: '300', lineHeight: 1.05, marginBottom: '6px' }}>{trip.name}</h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '13px', fontFamily: 'var(--font-mono)' }}>
+                  {trip.startDate?.slice(0,10)} – {trip.endDate?.slice(0,10)}
+                </p>
+              </div>
+              <button
+                onClick={handleDownloadPdf}
+                disabled={pdfLoading}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '7px',
+                  padding: '9px 16px', marginTop: '8px',
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  color: 'var(--accent-primary)',
+                  fontSize: '12px', fontWeight: '500',
+                  cursor: pdfLoading ? 'not-allowed' : 'pointer',
+                  letterSpacing: '0.03em',
+                  opacity: pdfLoading ? 0.6 : 1,
+                  transition: 'border-color 0.15s',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+                onMouseEnter={e => { if (!pdfLoading) e.currentTarget.style.borderColor = 'var(--accent-border)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
+              >
+                {pdfLoading ? '⏳' : '⬇'} {pdfLoading ? 'Generating...' : 'Download PDF'}
+              </button>
+            </div>
 
             {/* Stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: '10px', marginBottom: '28px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: '10px', marginBottom: '28px', marginTop: '28px' }}>
               {[
                 { label: 'Duration',     value: getDuration(trip.startDate, trip.endDate) },
                 { label: 'Destinations', value: (trip.destinations || []).length },
@@ -372,6 +421,16 @@ function SharedTripPage() {
           />
         )}
       </Modal>
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="Delete Activity"
+        message="Are you sure you want to delete this activity? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={handleDeleteActivityConfirmed}
+        onCancel={() => setConfirmDialog({ isOpen: false, id: null })}
+      />
     </div>
   );
 }

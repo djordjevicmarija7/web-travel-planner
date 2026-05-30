@@ -7,6 +7,7 @@ import Navbar from '../components/common/Navbar';
 import TripForm from '../components/trip/TripForm';
 import Toast from '../components/common/Toast';
 import { Button, Card, Badge, EmptyState, Modal, Spinner } from '../components/ui';
+import ConfirmDialog from '../components/common/ConfirmDialog';
 
 function getTripDuration(start, end) {
   if (!start || !end) return null;
@@ -32,6 +33,7 @@ function DashboardPage() {
   const [loading, setLoading]       = useState(true);
   const [showModal, setShowModal]   = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
 
   useEffect(() => { fetchTrips(); }, []);
 
@@ -55,17 +57,22 @@ function DashboardPage() {
     finally { setCreateLoading(false); }
   }
 
-  async function handleDelete(id, e) {
+  function handleDelete(id, e) {
     e.stopPropagation();
-    if (!window.confirm('Delete this trip plan? This will also delete all destinations, activities, expenses and checklist items.')) return;
+    setConfirmDialog({ isOpen: true, id });
+  }
+ 
+  async function handleDeleteConfirmed() {
+    const { id } = confirmDialog;
+    setConfirmDialog({ isOpen: false, id: null });
     try {
       await tripService.remove(id);
       setTrips((prev) => prev.filter((t) => t.id !== id));
       showToast('Trip deleted.');
     } catch { showToast('Error deleting trip.', 'error'); }
   }
+ 
 
-  // Sort: ongoing first, then upcoming, then past
   const sortOrder = { ongoing: 0, upcoming: 1, past: 2 };
   const sortedTrips = [...trips].sort((a, b) => {
     const sa = getTripStatus(a.startDate, a.endDate).variant;
@@ -143,6 +150,16 @@ function DashboardPage() {
       </Modal>
 
       <Toast toast={toast} />
+            <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="Delete Trip"
+        message="Are you sure you want to delete this trip plan? All destinations, activities, expenses and checklist items will be permanently removed."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setConfirmDialog({ isOpen: false, id: null })}
+      />
     </div>
   );
 }

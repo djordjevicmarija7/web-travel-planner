@@ -9,5 +9,6 @@ namespace TravelService.Services
         Task<TripDto> CreateAsync(CreateTripDto dto, int userId);
         Task<TripDto?> UpdateAsync(int id, UpdateTripDto dto, int userId);
         Task<bool> DeleteAsync(int id, int userId);
+        Task DeleteAllByUserAsync(int userId);
     }
 }

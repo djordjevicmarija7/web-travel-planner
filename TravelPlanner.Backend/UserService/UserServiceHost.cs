@@ -61,6 +61,7 @@ namespace UserService
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+                        builder.Services.AddHttpClient();
                         builder.Services.AddCors(options =>
                         {
                             options.AddPolicy("AllowFrontend", policy =>

@@ -2,13 +2,18 @@ import { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import shareService from '../../services/shareService';
 import { Button, Badge, EmptyState } from '../ui';
+import ConfirmDialog from '../common/ConfirmDialog';
+import { generateTripPdf } from '../../utils/generateTripPdf';
 
-function ShareSection({ tripId }) {
-  const [tokens, setTokens]       = useState([]);
-  const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState('');
+// trip prop — full trip object already loaded in TripDetailPage
+function ShareSection({ tripId, trip }) {
+  const [tokens, setTokens]         = useState([]);
+  const [loading, setLoading]       = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [error, setError]           = useState('');
   const [selectedQr, setSelectedQr] = useState(null);
-  const [copied, setCopied]       = useState(null);
+  const [copied, setCopied]         = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
 
   useEffect(() => { fetchTokens(); }, [tripId]);
 
@@ -27,13 +32,25 @@ function ShareSection({ tripId }) {
     } catch { setError('Error creating link.'); } finally { setLoading(false); }
   }
 
-  async function handleRevoke(tokenId) {
-    if (!window.confirm('Deactivate this share link?')) return;
+  function handleRevoke(tokenId) {
+    setConfirmDialog({ isOpen: true, id: tokenId });
+  }
+
+  async function handleRevokeConfirmed() {
+    const tokenId = confirmDialog.id;
+    setConfirmDialog({ isOpen: false, id: null });
     try {
       await shareService.revokeToken(tripId, tokenId);
       setTokens((prev) => prev.filter((t) => t.id !== tokenId));
       if (selectedQr?.id === tokenId) setSelectedQr(null);
     } catch { setError('Error deactivating link.'); }
+  }
+
+  function handleDownloadPdf() {
+    if (!trip) return;
+    setPdfLoading(true);
+    try { generateTripPdf(trip); }
+    finally { setPdfLoading(false); }
   }
 
   function buildShareUrl(token) {
@@ -59,8 +76,11 @@ function ShareSection({ tripId }) {
       {/* Create buttons */}
       <div style={{
         background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-        borderRadius: 'var(--radius-lg)', padding: '20px', marginBottom: '24px',
+        borderRadius: 'var(--radius-lg)', padding: '20px', marginBottom: '16px',
       }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '10px' }}>
+          Share Links
+        </div>
         <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.6 }}>
           Generate a shareable link or QR code. <strong style={{ color: 'var(--text-primary)' }}>View</strong> links allow read-only access; <strong style={{ color: 'var(--accent-primary)' }}>Edit</strong> links allow modifications.
         </div>
@@ -72,6 +92,22 @@ function ShareSection({ tripId }) {
             ✏ Create Edit Link
           </Button>
         </div>
+      </div>
+
+      {/* PDF export */}
+      <div style={{
+        background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
+        borderRadius: 'var(--radius-lg)', padding: '20px', marginBottom: '24px',
+      }}>
+        <div style={{ fontSize: '10px', letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '10px' }}>
+          PDF Report
+        </div>
+        <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.6 }}>
+          Download a complete PDF report — destinations, activities, expenses and packing list.
+        </div>
+        <Button variant="secondary" onClick={handleDownloadPdf} disabled={pdfLoading}>
+          {pdfLoading ? '⏳ Generating...' : '⬇ Download PDF Report'}
+        </Button>
       </div>
 
       {/* Token list */}
@@ -142,6 +178,17 @@ function ShareSection({ tripId }) {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="Revoke Share Link"
+        message="Are you sure you want to deactivate this share link? Anyone using it will lose access."
+        confirmText="Revoke"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={handleRevokeConfirmed}
+        onCancel={() => setConfirmDialog({ isOpen: false, id: null })}
+      />
     </div>
   );
 }

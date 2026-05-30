@@ -82,5 +82,11 @@ namespace ActivityService.Controllers
             }
             return NoContent();
         }
+        [HttpDelete("all")]
+        public async Task<IActionResult> DeleteAll(int tripId)
+        {
+            await _activityService.DeleteAllByTripAsync(tripId);
+            return NoContent();
+        }
     }
 }

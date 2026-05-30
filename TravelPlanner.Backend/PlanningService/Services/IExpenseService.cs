@@ -7,6 +7,6 @@ namespace PlanningService.Services
         Task<List<ExpenseDto>> GetAllByTripAsync(int tripId);
         Task<ExpenseDto> CreateAsync(int tripId, CreateExpenseDto dto);
         Task<bool> DeleteAsync(int id, int tripId);
-
+        Task DeleteAllByTripAsync(int tripId);
     }
 }

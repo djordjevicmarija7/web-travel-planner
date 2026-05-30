@@ -105,5 +105,13 @@ namespace ActivityService.Services
                 TripId = activity.TripId
             };
         }
+        public async Task DeleteAllByTripAsync(int tripId)
+        {
+            var activities = await _context.Activities
+                .Where(a => a.TripId == tripId)
+                .ToListAsync();
+            _context.Activities.RemoveRange(activities);
+            await _context.SaveChangesAsync();
+        }
     }
 }

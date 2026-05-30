@@ -8,5 +8,6 @@ namespace PlanningService.Services
         Task<ChecklistItemDto> CreateAsync(int tripId, CreateChecklistItemDto dto);
         Task<ChecklistItemDto?> ToggleAsync(int id, int tripId, ToggleChecklistItemDto dto);
         Task<bool> DeleteAsync(int id, int tripId);
+        Task DeleteAllByTripAsync(int tripId);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Net.Http;
 using UserService.Data;
 using UserService.DTOs;
 using UserService.Models;
@@ -9,23 +10,26 @@ namespace UserService.Services
     {
         private readonly AppDbContext _context;
 
-        public AdminService(AppDbContext context)
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public AdminService(AppDbContext context, IHttpClientFactory httpClientFactory)
         {
             _context = context;
+            _httpClientFactory = httpClientFactory;
         }
 
         public async Task<bool> DeleteUserAsync(int id)
         {
             var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return false;
-            }
+            if (user == null) return false;
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
-            return true;
 
+            var client = _httpClientFactory.CreateClient();
+            await client.DeleteAsync($"http://localhost:5002/api/trips/user/{id}/all");
+
+            return true;
         }
 
         public async Task<List<UserDto>> GetAllUsersAsync()

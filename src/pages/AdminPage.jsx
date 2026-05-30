@@ -7,7 +7,7 @@ import Navbar from '../components/common/Navbar';
 import Toast from '../components/common/Toast';
 import { Button, Badge, Spinner } from '../components/ui';
 import { UserRole } from '../enums/user/UserRole';
-
+import ConfirmDialog from '../components/common/ConfirmDialog';
 function AdminPage() {
   const { adminService } = useServices();
   const { user }         = useAuth();
@@ -16,6 +16,7 @@ function AdminPage() {
 
   const [users, setUsers]   = useState([]);
   const [loading, setLoading] = useState(true);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null, type: null, newRole: null });
 
   useEffect(() => {
     if (user?.role !== UserRole.admin) { navigate('/dashboard'); return; }
@@ -31,24 +32,41 @@ function AdminPage() {
     finally { setLoading(false); }
   }
 
-  async function handleRoleChange(id, currentRole) {
-    const newRole = currentRole === UserRole.admin ? UserRole.user : UserRole.admin;
-    if (!window.confirm(`Change role to "${newRole}"?`)) return;
+  async function handleRoleChangeConfirmed() {
+    const { id, newRole } = confirmDialog;
+    setConfirmDialog({ isOpen: false, id: null, type: null, newRole: null });
     try {
       const updated = await adminService.updateRole(id, newRole);
       setUsers((prev) => prev.map(u => u.id === id ? updated : u));
       showToast(`Role changed to ${newRole}.`);
     } catch { showToast('Error changing role.', 'error'); }
   }
-
-  async function handleDelete(id) {
-    if (!window.confirm('Permanently delete this user and all their data?')) return;
+ 
+  function handleDelete(id) {
+    setConfirmDialog({ isOpen: true, id, type: 'delete', newRole: null });
+  }
+ 
+  async function handleDeleteConfirmed() {
+    const { id } = confirmDialog;
+    setConfirmDialog({ isOpen: false, id: null, type: null, newRole: null });
     try {
       await adminService.deleteUser(id);
       setUsers((prev) => prev.filter(u => u.id !== id));
       showToast('User deleted.');
     } catch { showToast('Error deleting user.', 'error'); }
   }
+ function handleRoleChange(id, currentRole) {
+  const newRole = currentRole === UserRole.admin ? UserRole.user : UserRole.admin;
+
+  setConfirmDialog({
+    isOpen: true,
+    id,
+    type: 'role',
+    newRole,
+  });
+}
+  const isDeleteDialog = confirmDialog.type === 'delete';
+  const isRoleDialog   = confirmDialog.type === 'role';
 
   return (
     <div style={{ minHeight: '100vh' }}>
@@ -167,6 +185,31 @@ function AdminPage() {
       </main>
 
       <Toast toast={toast} />
+       <ConfirmDialog
+        isOpen={confirmDialog.isOpen && isDeleteDialog}
+        title="Delete User"
+        message="Are you sure you want to permanently delete this user and all their data? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setConfirmDialog({ isOpen: false, id: null, type: null, newRole: null })}
+      />
+ 
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen && isRoleDialog}
+        title={confirmDialog.newRole === 'admin' ? 'Make Admin' : 'Remove Admin'}
+        message={
+          confirmDialog.newRole === 'admin'
+            ? 'Are you sure you want to grant admin privileges to this user?'
+            : 'Are you sure you want to remove admin privileges from this user?'
+        }
+        confirmText={confirmDialog.newRole === 'admin' ? 'Make Admin' : 'Remove Admin'}
+        cancelText="Cancel"
+        variant="warning"
+        onConfirm={handleRoleChangeConfirmed}
+        onCancel={() => setConfirmDialog({ isOpen: false, id: null, type: null, newRole: null })}
+      />
     </div>
   );
 }

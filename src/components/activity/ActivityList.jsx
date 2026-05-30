@@ -3,6 +3,7 @@ import activityService from '../../services/activityService';
 import ActivityForm from './ActivityForm';
 import { Badge, EmptyState, Modal } from '../ui';
 import { ActivityStatus } from '../../enums/activity/ActivityStatus';
+import ConfirmDialog from '../common/ConfirmDialog';
 
 const STATUS_LABELS = { planned: 'Planned', reserved: 'Reserved', completed: 'Completed', cancelled: 'Cancelled' };
 const STATUS_COLORS = { planned: 'var(--status-planned)', reserved: 'var(--status-reserved)', completed: 'var(--status-completed)', cancelled: 'var(--status-cancelled)' };
@@ -34,7 +35,8 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
   const [selectedDay, setSelectedDay] = useState(null);
   const [editTarget, setEditTarget] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
-
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
+  
   const grouped = activities.reduce((acc, a) => {
     const d = a.date?.slice(0, 10);
     if (!acc[d]) acc[d] = [];
@@ -46,8 +48,13 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
   const tripStart = tripStartDate ? toYMD(tripStartDate) : null;
   const tripEnd   = tripEndDate   ? toYMD(tripEndDate)   : null;
 
-  async function handleDelete(id) {
-    if (!window.confirm('Delete this activity?')) return;
+    function handleDelete(id) {
+    setConfirmDialog({ isOpen: true, id });
+  }
+ 
+  async function handleDeleteConfirmed() {
+    const id = confirmDialog.id;
+    setConfirmDialog({ isOpen: false, id: null });
     try { await activityService.remove(tripId, id); onDeleted(id); }
     catch { alert('Error deleting activity.'); }
   }
@@ -281,6 +288,16 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
           />
         )}
       </Modal>
+            <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="Delete Activity"
+        message="Are you sure you want to delete this activity? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setConfirmDialog({ isOpen: false, id: null })}
+      />
     </div>
   );
 }

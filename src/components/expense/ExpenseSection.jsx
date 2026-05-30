@@ -2,6 +2,9 @@ import { useState } from 'react';
 import expenseService from '../../services/expenseService';
 import { Button, Input, Textarea, Select, FormRow, Modal, EmptyState, ProgressBar } from '../ui';
 import {ExpenseCategory} from '../../enums/expense/ExpenseCategory'
+import ConfirmDialog from '../common/ConfirmDialog';
+
+
 const CATEGORIES = [
   { value: ExpenseCategory.transport,      label: 'Transport',      icon: '✈' },
   { value: ExpenseCategory.accommodation,  label: 'Accommodation',  icon: '🏨' },
@@ -18,6 +21,7 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
   const [errors, setErrors]     = useState({});
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading]   = useState(false);
+ const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
 
   const totalSpent = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
   const remaining  = budget != null ? budget - totalSpent : null;
@@ -55,8 +59,13 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
     } catch { alert('Error adding expense.'); } finally { setLoading(false); }
   }
 
-  async function handleDelete(id) {
-    if (!window.confirm('Delete this expense?')) return;
+  function handleDelete(id) {
+    setConfirmDialog({ isOpen: true, id });
+  }
+ 
+  async function handleDeleteConfirmed() {
+    const id = confirmDialog.id;
+    setConfirmDialog({ isOpen: false, id: null });
     try { await expenseService.remove(tripId, id); onDeleted(id); }
     catch { alert('Error deleting expense.'); }
   }
@@ -212,6 +221,16 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
           </div>
         </form>
       </Modal>
+            <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="Delete Expense"
+        message="Are you sure you want to delete this expense? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setConfirmDialog({ isOpen: false, id: null })}
+      />
     </div>
   );
 }

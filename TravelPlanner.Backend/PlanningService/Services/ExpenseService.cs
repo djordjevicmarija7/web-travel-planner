@@ -109,5 +109,13 @@ namespace PlanningService.Services
             await dict.SetAsync(tx, tripId, newTotal.ToString("F2"));
             await tx.CommitAsync();
         }
+        public async Task DeleteAllByTripAsync(int tripId)
+        {
+            var expenses = await _context.Expenses
+                .Where(e => e.TripId == tripId)
+                .ToListAsync();
+            _context.Expenses.RemoveRange(expenses);
+            await _context.SaveChangesAsync();
+        }
     }
 }

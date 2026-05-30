@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import destinationService from '../../services/destinationService';
 import { Button, Input, Textarea, FormRow, Modal, EmptyState } from '../ui';
+import ConfirmDialog from '../common/ConfirmDialog';
 
 const emptyForm = { name: '', location: '', arrivalDate: '', departureDate: '', description: '', notes: '' };
 
 function DestinationForm({ initialData, onSubmit, onCancel, loading, tripStartDate, tripEndDate }) {
   const [formData, setFormData] = useState(initialData || emptyForm);
   const [errors, setErrors] = useState({});
-
+    const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
   function handleChange(e) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -23,7 +24,6 @@ function DestinationForm({ initialData, onSubmit, onCancel, loading, tripStartDa
     if (formData.arrivalDate && formData.departureDate && formData.departureDate < formData.arrivalDate)
       e.departureDate = 'Departure cannot be before arrival.';
 
-    // Must be within trip range
     if (tripStartDate && formData.arrivalDate && formData.arrivalDate < tripStartDate)
       e.arrivalDate = `Arrival cannot be before trip start (${tripStartDate}).`;
     if (tripEndDate && formData.departureDate && formData.departureDate > tripEndDate)
@@ -159,10 +159,19 @@ function DestinationSection({ destinations, tripId, tripStartDate, tripEndDate, 
     finally { setLoading(false); }
   }
 
-  async function handleDelete(id) {
-    if (!window.confirm('Delete this destination?')) return;
-    try { await destinationService.remove(tripId, id); onDeleted(id); }
-    catch { alert('Error deleting destination.'); }
+  function handleDelete(id) {
+    setConfirmDialog({ isOpen: true, id });
+  }
+ 
+  async function handleDeleteConfirmed() {
+    const id = confirmDialog.id;
+    setConfirmDialog({ isOpen: false, id: null });
+    try {
+      await destinationService.remove(tripId, id);
+      onDeleted(id);
+    } catch {
+      alert('Error deleting destination.');
+    }
   }
 
   const sorted = [...destinations].sort((a, b) => new Date(a.arrivalDate) - new Date(b.arrivalDate));
@@ -213,6 +222,16 @@ function DestinationSection({ destinations, tripId, tripStartDate, tripEndDate, 
           tripEndDate={tripEndDate}
         />
       </Modal>
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="Delete Destination"
+        message="Are you sure you want to delete this destination? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={handleDeleteConfirmed}
+        onCancel={() => setConfirmDialog({ isOpen: false, id: null })}
+      />
     </div>
   );
 }

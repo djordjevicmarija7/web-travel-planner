@@ -38,7 +38,7 @@ namespace TravelService
                         builder.Services.AddScoped<ITripService, TripService>();
                         builder.Services.AddScoped<IDestinationService, DestinationService>();
                         builder.Services.AddScoped<IShareService, ShareService>();
-
+                        builder.Services.AddHttpClient();
                         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                             .AddJwtBearer(options =>
                             {
