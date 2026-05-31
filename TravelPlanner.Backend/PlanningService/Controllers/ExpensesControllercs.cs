@@ -1,4 +1,5 @@
 ﻿using Common.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PlanningService.Services;
 
@@ -6,6 +7,7 @@ namespace PlanningService.Controllers
 {
     [ApiController]
     [Route("api/trips/{tripId}/expenses")]
+    [Authorize]
     public class ExpensesControllercs : ControllerBase
     {
         private readonly IExpenseService _expenseService;

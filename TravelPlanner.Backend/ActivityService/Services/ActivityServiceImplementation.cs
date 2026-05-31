@@ -8,51 +8,53 @@ namespace ActivityService.Services
 {
     public class ActivityServiceImplementation : IActivityService
     {
-        private readonly AppDbContext _context;
-        private readonly TripApiClient _tripClient;
 
-        public ActivityServiceImplementation(AppDbContext context, TripApiClient tripClient)
-        {
-            _context = context;
-            _tripClient = tripClient;
-        }
+            private readonly AppDbContext _context;
+            private readonly TripApiClient _tripApiClient;
 
-        public async Task<ActivityDto?> CreateAsync(int tripId, CreateActivityDto dto)
-        {
-            var trip = await _tripClient.GetTripAsync(tripId);
-            if (trip == null)
+            public ActivityServiceImplementation(AppDbContext context, TripApiClient tripApiClient)
             {
-                throw new InvalidOperationException("Travel plan not found.");
+                _context = context;
+                _tripApiClient = tripApiClient;
             }
 
-            if (dto.EstimatedCost.HasValue && dto.EstimatedCost < 0)
+            public async Task<ActivityDto?> CreateAsync(int tripId, CreateActivityDto dto)
             {
-                throw new ArgumentException("Expenses cannot be negative.");
+                var trip = await _tripApiClient.GetByIdAsync(tripId);
+                if (trip == null)
+                {
+                    throw new InvalidOperationException("Travel plan not found.");
+                }
+
+                if (dto.EstimatedCost.HasValue && dto.EstimatedCost < 0)
+                {
+                    throw new ArgumentException("Expenses cannot be negative.");
+                }
+
+                if (dto.Date.Date < trip.StartDate.Date || dto.Date.Date > trip.EndDate.Date)
+                {
+                    throw new ArgumentException("Activity date must be within the trip dates.");
+                }
+
+                var activity = new Activity
+                {
+                    Name = dto.Name,
+                    Date = dto.Date,
+                    Time = dto.Time,
+                    Location = dto.Location,
+                    Description = dto.Description,
+                    EstimatedCost = dto.EstimatedCost,
+                    Status = dto.Status,
+                    TripId = tripId
+                };
+
+                _context.Activities.Add(activity);
+                await _context.SaveChangesAsync();
+
+                return MapToDto(activity);
             }
 
-            if (dto.Date.Date < trip.StartDate.Date || dto.Date.Date > trip.EndDate.Date)
-            {
-                throw new ArgumentException("Activity date must be within the trip dates.");
-            }
-
-            var activity = new Activity
-            {
-                Name = dto.Name,
-                Date = dto.Date,
-                Time = dto.Time,
-                Location = dto.Location,
-                Description = dto.Description,
-                EstimatedCost = dto.EstimatedCost,
-                Status = dto.Status,
-                TripId = tripId
-            };
-
-            _context.Activities.Add(activity);
-            await _context.SaveChangesAsync();
-            return MapToDto(activity);
-        }
-
-        public async Task<bool> DeleteAsync(int id, int tripId)
+            public async Task<bool> DeleteAsync(int id, int tripId)
         {
             var activity = await _context.Activities
                 .FirstOrDefaultAsync(a => a.Id == id && a.TripId == tripId);
@@ -84,7 +86,7 @@ namespace ActivityService.Services
 
         public async Task<ActivityDto?> UpdateAsync(int id, int tripId, UpdateActivityDto dto)
         {
-            var trip = await _tripClient.GetTripAsync(tripId);
+            var trip = await _tripApiClient.GetByIdAsync(tripId);
             if (trip == null)
             {
                 return null;

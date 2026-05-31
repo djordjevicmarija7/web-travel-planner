@@ -26,9 +26,9 @@ namespace TravelService
                     {
                         var builder = WebApplication.CreateBuilder();
                         builder.Configuration
-    .SetBasePath(builder.Environment.ContentRootPath)
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddEnvironmentVariables();
+                            .SetBasePath(builder.Environment.ContentRootPath)
+                            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                            .AddEnvironmentVariables();
                         builder.WebHost.UseKestrel();
                         builder.WebHost.UseUrls(url);
 
@@ -40,13 +40,14 @@ namespace TravelService
                         builder.Services.AddScoped<IDestinationService, DestinationService>();
                         builder.Services.AddScoped<IShareService, ShareService>();
                         builder.Services.AddHttpClient<ActivityApiClient>(c =>
-    c.BaseAddress = new Uri("http://localhost:5003"));
+                            c.BaseAddress = new Uri("http://localhost:5003"));
 
-builder.Services.AddHttpClient<ExpenseApiClient>(c =>
-    c.BaseAddress = new Uri("http://localhost:5004"));
+                        builder.Services.AddHttpClient<ExpenseApiClient>(c =>
+                            c.BaseAddress = new Uri("http://localhost:5004"));
 
-builder.Services.AddHttpClient<ChecklistApiClient>(c =>
-    c.BaseAddress = new Uri("http://localhost:5004"));
+                        builder.Services.AddHttpClient<ChecklistApiClient>(c =>
+                            c.BaseAddress = new Uri("http://localhost:5004"));
+                        builder.Services.AddHttpClient();
                         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                             .AddJwtBearer(options =>
                             {

@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PlanningService.Services;
 
 namespace PlanningService.Controllers
 {
     [ApiController]
     [Route("api/trips/{tripId}")]
+    [Authorize]
     public class TripCleanupController : ControllerBase
     {
         private readonly IChecklistService _checklistService;

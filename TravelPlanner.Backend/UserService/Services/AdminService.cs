@@ -1,6 +1,11 @@
 ﻿using Common.DTOs;
 using Common.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
+using System.Security.Claims;
+using System.Text;
 using UserService.Data;
 using UserService.Models;
 
@@ -9,13 +14,14 @@ namespace UserService.Services
     public class AdminService : IAdminService
     {
         private readonly AppDbContext _context;
-
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _configuration;
 
-        public AdminService(AppDbContext context, IHttpClientFactory httpClientFactory)
+        public AdminService(AppDbContext context, IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
             _context = context;
             _httpClientFactory = httpClientFactory;
+            _configuration = configuration;
         }
 
         public async Task<bool> DeleteUserAsync(int id)
@@ -26,8 +32,12 @@ namespace UserService.Services
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
 
+            var jwt = GenerateInternalToken(id);
             var client = _httpClientFactory.CreateClient();
-            await client.DeleteAsync($"http://localhost:5002/api/trips/user/{id}/all");
+
+            var req = new HttpRequestMessage(HttpMethod.Delete, $"http://localhost:5002/api/trips/user/{id}/all");
+            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
+            await client.SendAsync(req);
 
             return true;
         }
@@ -59,8 +69,30 @@ namespace UserService.Services
             user.Role = dto.Role;
             await _context.SaveChangesAsync();
             return MapToDto(user);
-
         }
+
+        private string GenerateInternalToken(int userId)
+        {
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim(ClaimTypes.Role, "service"),
+                new Claim("token_type", "internal"),
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(2),
+                signingCredentials: creds);
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
         private static UserDto MapToDto(User u)
         {
             return new UserDto

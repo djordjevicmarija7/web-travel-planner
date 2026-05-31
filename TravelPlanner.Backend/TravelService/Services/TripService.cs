@@ -1,5 +1,10 @@
 ﻿using Common.DTOs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
+using System.Security.Claims;
+using System.Text;
 using TravelService.Data;
 using TravelService.Models;
 
@@ -9,11 +14,12 @@ namespace TravelService.Services
     {
         private readonly AppDbContext _context;
         private readonly IHttpClientFactory _httpClientFactory;
-
-        public TripService(AppDbContext context, IHttpClientFactory httpClientFactory)
+        private readonly IConfiguration _configuration;
+        public TripService(AppDbContext context, IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
             _context = context;
             _httpClientFactory = httpClientFactory;
+            _configuration = configuration;
         }
 
         public async Task<TripDto> CreateAsync(CreateTripDto dto, int userId)
@@ -45,15 +51,21 @@ namespace TravelService.Services
         {
             var trip = await _context.Trips
                 .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
-
             if (trip == null) return false;
 
             _context.Trips.Remove(trip);
             await _context.SaveChangesAsync();
 
+            var jwt = GenerateInternalToken(userId);
             var client = _httpClientFactory.CreateClient();
-            await client.DeleteAsync($"http://localhost:5003/api/trips/{id}/all");
-            await client.DeleteAsync($"http://localhost:5004/api/trips/{id}/all");
+
+            var req1 = new HttpRequestMessage(HttpMethod.Delete, $"http://localhost:5003/api/trips/{id}/all");
+            req1.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
+            await client.SendAsync(req1);
+
+            var req2 = new HttpRequestMessage(HttpMethod.Delete, $"http://localhost:5004/api/trips/{id}/all");
+            req2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
+            await client.SendAsync(req2);
 
             return true;
         }
@@ -134,15 +146,40 @@ namespace TravelService.Services
                 .Where(t => t.UserId == userId)
                 .ToListAsync();
 
+            var jwt = GenerateInternalToken(userId);
             var client = _httpClientFactory.CreateClient();
+
             foreach (var trip in trips)
             {
-                await client.DeleteAsync($"http://localhost:5003/api/trips/{trip.Id}/all");
-                await client.DeleteAsync($"http://localhost:5004/api/trips/{trip.Id}/all");
+                var req1 = new HttpRequestMessage(HttpMethod.Delete, $"http://localhost:5003/api/trips/{trip.Id}/all");
+                req1.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
+                await client.SendAsync(req1);
+
+                var req2 = new HttpRequestMessage(HttpMethod.Delete, $"http://localhost:5004/api/trips/{trip.Id}/all");
+                req2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
+                await client.SendAsync(req2);
             }
 
             _context.Trips.RemoveRange(trips);
             await _context.SaveChangesAsync();
+        }
+        private string GenerateInternalToken(int userId)
+        {
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var claims = new[]
+            {
+        new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+        new Claim(ClaimTypes.Role, "service"),
+        new Claim("token_type", "internal"),
+    };
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddMinutes(2),
+                signingCredentials: creds);
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }

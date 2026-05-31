@@ -91,7 +91,7 @@ namespace TravelService.Controllers
             return NoContent();
         }
         [HttpDelete("user/{userId}/all")]
-        [AllowAnonymous]
+        [Authorize(Roles = "service,admin")]
         public async Task<IActionResult> DeleteAllByUser(int userId)
         {
             await _tripService.DeleteAllByUserAsync(userId);

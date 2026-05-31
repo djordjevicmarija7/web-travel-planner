@@ -41,6 +41,7 @@ namespace ActivityService
 {
     client.BaseAddress = new Uri("http://localhost:5002");
 });
+                        builder.Services.AddHttpContextAccessor();
                         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                             .AddJwtBearer(options =>
                             {

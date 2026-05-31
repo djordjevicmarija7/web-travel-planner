@@ -46,6 +46,10 @@ namespace ActivityService.Controllers
                 var activity = await _activityService.CreateAsync(tripId, dto);
                 return CreatedAtAction(nameof(GetById), new { tripId, id = activity.Id }, activity);
             }
+            catch (InvalidOperationException ex) 
+            {
+                return NotFound(new { message = ex.Message });
+            }
             catch (ArgumentException ex)
             {
                 return BadRequest(new { message = ex.Message });
@@ -66,6 +70,10 @@ namespace ActivityService.Controllers
                     return NotFound();
                 }
                 return Ok(activity);
+            }
+            catch (InvalidOperationException ex)  
+            {
+                return NotFound(new { message = ex.Message });
             }
             catch (ArgumentException ex)
             {
