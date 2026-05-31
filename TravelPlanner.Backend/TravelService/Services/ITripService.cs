@@ -1,4 +1,4 @@
-﻿using TravelService.DTOs;
+﻿using Common.DTOs;
 
 namespace TravelService.Services
 {

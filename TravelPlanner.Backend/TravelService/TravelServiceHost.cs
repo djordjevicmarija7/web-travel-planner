@@ -1,11 +1,12 @@
-﻿using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
 using System.Fabric;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using TravelService.Clients;
 using TravelService.Data;
 using TravelService.Services;
 
@@ -38,7 +39,14 @@ namespace TravelService
                         builder.Services.AddScoped<ITripService, TripService>();
                         builder.Services.AddScoped<IDestinationService, DestinationService>();
                         builder.Services.AddScoped<IShareService, ShareService>();
-                        builder.Services.AddHttpClient();
+                        builder.Services.AddHttpClient<ActivityApiClient>(c =>
+    c.BaseAddress = new Uri("http://localhost:5003"));
+
+builder.Services.AddHttpClient<ExpenseApiClient>(c =>
+    c.BaseAddress = new Uri("http://localhost:5004"));
+
+builder.Services.AddHttpClient<ChecklistApiClient>(c =>
+    c.BaseAddress = new Uri("http://localhost:5004"));
                         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                             .AddJwtBearer(options =>
                             {

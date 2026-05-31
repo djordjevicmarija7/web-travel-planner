@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Common.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using UserService.DTOs;
 using UserService.Services;
 
 namespace UserService.Controllers
@@ -45,9 +45,9 @@ namespace UserService.Controllers
                 }
                 return Ok(user);
             }
-            catch(ArgumentException ex)
+            catch (ArgumentException ex)
             {
-                return BadRequest(new {message = ex.Message});
+                return BadRequest(new { message = ex.Message });
             }
         }
         [HttpDelete("{id}")]

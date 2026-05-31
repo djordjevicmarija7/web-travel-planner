@@ -1,5 +1,5 @@
-using Microsoft.ServiceFabric.Services.Runtime;
 using ActivityService;
+using Microsoft.ServiceFabric.Services.Runtime;
 
 try
 {

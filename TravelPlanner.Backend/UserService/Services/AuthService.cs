@@ -1,10 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Common.DTOs;
+using Common.Enums;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using UserService.Data;
-using UserService.DTOs;
 using UserService.Models;
 
 namespace UserService.Services
@@ -30,7 +31,7 @@ namespace UserService.Services
 
             bool passwordValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
 
-            if(!passwordValid)
+            if (!passwordValid)
             {
                 throw new UnauthorizedAccessException("Wrong email or password.");
             }
@@ -43,7 +44,7 @@ namespace UserService.Services
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
         {
             bool emailExists = await _context.Users.AnyAsync(u => u.Email == dto.Email);
-            if(emailExists)
+            if (emailExists)
             {
                 throw new InvalidOperationException("User with this email address already exists.");
             }
@@ -54,7 +55,7 @@ namespace UserService.Services
                 Name = dto.Name,
                 Email = dto.Email,
                 PasswordHash = passwordHash,
-                Role = Enums.UserRole.user
+                Role = UserRole.user
             };
 
             _context.Users.Add(user);

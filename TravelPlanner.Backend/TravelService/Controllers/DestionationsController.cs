@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Common.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using TravelService.DTOs;
 using TravelService.Services;
 
 namespace TravelService.Controllers
@@ -53,11 +53,11 @@ namespace TravelService.Controllers
                 var destination = await _destinationService.CreateAsync(tripId, dto, GetUserId());
                 return CreatedAtAction(nameof(GetById), new { tripId, id = destination.Id }, destination);
             }
-            catch(ArgumentException ex)
+            catch (ArgumentException ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
-            catch(InvalidOperationException ex)
+            catch (InvalidOperationException ex)
             {
                 return NotFound(new { message = ex.Message });
             }
@@ -73,7 +73,7 @@ namespace TravelService.Controllers
             try
             {
                 var destination = await _destinationService.UpdateAsync(id, tripId, dto, GetUserId());
-                if(destination == null)
+                if (destination == null)
                 {
                     return NotFound();
                 }

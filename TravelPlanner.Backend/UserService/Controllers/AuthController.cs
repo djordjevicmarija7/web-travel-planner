@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using UserService.DTOs;
+﻿using Common.DTOs;
+using Microsoft.AspNetCore.Mvc;
 using UserService.Services;
 
 namespace UserService.Controllers

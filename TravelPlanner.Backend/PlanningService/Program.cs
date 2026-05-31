@@ -9,7 +9,7 @@ try
         .GetAwaiter().GetResult();
     Thread.Sleep(Timeout.Infinite);
 }
-catch(Exception e)
+catch (Exception e)
 {
     Console.WriteLine(e);
     throw;

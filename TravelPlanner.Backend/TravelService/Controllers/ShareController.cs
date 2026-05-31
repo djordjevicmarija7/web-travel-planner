@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Common.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using TravelService.DTOs;
 using TravelService.Services;
 
 namespace TravelService.Controllers
@@ -33,7 +33,7 @@ namespace TravelService.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
-            catch(ArgumentException ex)
+            catch (ArgumentException ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
@@ -42,7 +42,7 @@ namespace TravelService.Controllers
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> GetTokens(int tripId)
-        { 
+        {
             var tokens = await _shareService.GetTokensByTripAsync(tripId, GetUserId());
             return Ok(tokens);
         }

@@ -1,7 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.Net.Http;
+﻿using Common.DTOs;
+using Common.Enums;
+using Microsoft.EntityFrameworkCore;
 using UserService.Data;
-using UserService.DTOs;
 using UserService.Models;
 
 namespace UserService.Services
@@ -52,7 +52,7 @@ namespace UserService.Services
             {
                 return null;
             }
-            if(dto.Role!=Enums.UserRole.user && dto.Role != Enums.UserRole.admin)
+            if (dto.Role != UserRole.user && dto.Role != UserRole.admin)
             {
                 throw new ArgumentException("Role must be 'user' or 'admin'.");
             }

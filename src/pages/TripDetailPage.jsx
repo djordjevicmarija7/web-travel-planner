@@ -280,7 +280,8 @@ function TripDetailPage() {
       </Modal>
 
       <Modal open={activityModal} onClose={() => setActivityModal(false)} title="New Activity">
-        <ActivityForm onSubmit={handleAddActivity} onCancel={() => setActivityModal(false)} loading={activityLoading} />
+        <ActivityForm onSubmit={handleAddActivity} onCancel={() => setActivityModal(false)} loading={activityLoading}   tripStartDate={tripStartDate}
+  tripEndDate={tripEndDate} />
       </Modal>
 
       <Toast toast={toast} />

@@ -1,4 +1,4 @@
-﻿using PlanningService.Enums;
+﻿using Common.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace PlanningService.Models

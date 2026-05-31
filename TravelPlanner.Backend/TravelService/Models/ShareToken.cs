@@ -1,5 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
-using TravelService.Enums;
+﻿using Common.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace TravelService.Models
 {

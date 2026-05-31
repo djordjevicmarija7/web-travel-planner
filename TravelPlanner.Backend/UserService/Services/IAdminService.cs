@@ -1,4 +1,4 @@
-﻿using UserService.DTOs;
+﻿using Common.DTOs;
 
 namespace UserService.Services
 {

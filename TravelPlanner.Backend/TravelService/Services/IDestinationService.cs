@@ -1,4 +1,4 @@
-﻿using TravelService.DTOs;
+﻿using Common.DTOs;
 
 namespace TravelService.Services
 {
@@ -7,7 +7,7 @@ namespace TravelService.Services
         Task<List<DestinationDto>> GetAllByTripAsync(int tripId, int userId);
         Task<DestinationDto?> GetByIdAsync(int id, int tripId, int userId);
         Task<DestinationDto> CreateAsync(int tripId, CreateDestinationDto dto, int userId);
-        Task<DestinationDto?> UpdateAsync(int id, int tripId,  UpdateDestinationDto dto, int userId);
+        Task<DestinationDto?> UpdateAsync(int id, int tripId, UpdateDestinationDto dto, int userId);
         Task<bool> DeleteAsync(int id, int tripId, int userId);
     }
 }

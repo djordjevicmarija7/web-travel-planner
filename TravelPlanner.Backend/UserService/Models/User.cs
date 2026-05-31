@@ -1,5 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
-using UserService.Enums;
+﻿using Common.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace UserService.Models
 {

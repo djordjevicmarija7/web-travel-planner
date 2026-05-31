@@ -11,7 +11,7 @@ namespace TravelService.Models
         [Required]
         public DateTime ArrivalDate { get; set; }
         [Required]
-        public DateTime DepartureDate { get; set;}
+        public DateTime DepartureDate { get; set; }
         public string? Description { get; set; }
         public string? Notes { get; set; }
         public int TripId { get; set; }

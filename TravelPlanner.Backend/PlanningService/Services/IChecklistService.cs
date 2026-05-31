@@ -1,4 +1,4 @@
-﻿using PlanningService.DTOs;
+﻿using Common.DTOs;
 
 namespace PlanningService.Services
 {

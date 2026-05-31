@@ -1,4 +1,4 @@
-﻿using ActivityService.DTOs;
+﻿using Common.DTOs;
 
 namespace ActivityService.Services
 {

@@ -147,16 +147,6 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
             <button onClick={nextMonth} style={navBtnStyle}>›</button>
           </div>
 
-          {/* Legend */}
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid var(--border-subtle)' }}>
-            <LegendItem color="rgba(201,168,76,0.15)" border="var(--accent-border)" label="Trip duration" />
-            <LegendItem color="rgba(201,168,76,0.28)" border="var(--accent-primary)" label="Active destination" />
-            <LegendItem color="rgba(91,156,246,0.08)" border="rgba(91,156,246,0.3)" label="Today" />
-            {Object.entries(STATUS_LABELS).map(([key, label]) => (
-              <LegendItem key={key} color={`${STATUS_COLORS[key]}22`} border={STATUS_COLORS[key]} label={label} dot />
-            ))}
-          </div>
-
           {/* Day headers */}
           <div style={calGridStyle}>
             {DAY_NAMES.map((d) => (
@@ -267,6 +257,9 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
 
           {/* Status legend */}
           <div style={{ display: 'flex', gap: '18px', flexWrap: 'wrap', marginTop: '18px', paddingTop: '16px', borderTop: '1px solid var(--border-subtle)' }}>
+            <LegendItem color="rgba(201,168,76,0.15)" border="var(--accent-border)" label="Trip duration" />
+            <LegendItem color="rgba(201,168,76,0.28)" border="var(--accent-primary)" label="Active destination" />
+            <LegendItem color="rgba(91,156,246,0.08)" border="rgba(91,156,246,0.3)" label="Today" />
             {Object.entries(STATUS_LABELS).map(([key, label]) => (
               <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>
                 <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: STATUS_COLORS[key] }} />
@@ -285,6 +278,8 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
             onSubmit={handleUpdate}
             onCancel={() => setEditTarget(null)}
             loading={editLoading}
+            tripStartDate={tripStartDate}
+            tripEndDate={tripEndDate}
           />
         )}
       </Modal>

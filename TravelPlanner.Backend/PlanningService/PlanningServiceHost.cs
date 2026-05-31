@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.ServiceFabric.Data;
+﻿using Microsoft.ServiceFabric.Data;
 using Microsoft.ServiceFabric.Data.Collections;
 using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
@@ -26,7 +25,7 @@ namespace PlanningService
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddEnvironmentVariables();
                         builder.WebHost.UseKestrel();
-                        builder.WebHost.UseUrls(url); 
+                        builder.WebHost.UseUrls(url);
                         builder.Services.AddSingleton<IReliableStateManager>(this.StateManager);
 
                         var startup = new Startup(builder.Configuration, this.StateManager);

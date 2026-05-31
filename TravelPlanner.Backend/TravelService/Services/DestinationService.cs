@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Common.DTOs;
+using Microsoft.EntityFrameworkCore;
 using TravelService.Data;
-using TravelService.DTOs;
 using TravelService.Models;
 
 namespace TravelService.Services
@@ -16,15 +16,22 @@ namespace TravelService.Services
 
         public async Task<DestinationDto> CreateAsync(int tripId, CreateDestinationDto dto, int userId)
         {
-            bool tripExists = await _context.Trips
-              .AnyAsync(t => t.Id == tripId && t.UserId == userId);
-            if (!tripExists)
+            var trip = await _context.Trips
+     .FirstOrDefaultAsync(t => t.Id == tripId && t.UserId == userId);
+
+            if (trip == null)
             {
                 throw new InvalidOperationException("Travel plan not found.");
             }
-            if (dto.DepartureDate < dto.ArrivalDate)
+
+            if (dto.ArrivalDate > dto.DepartureDate)
             {
-                throw new ArgumentException("The arrival date cannot be before the departure date.");
+                throw new ArgumentException("Departure date must be on or after arrival date.");
+            }
+
+            if (dto.ArrivalDate < trip.StartDate || dto.DepartureDate > trip.EndDate)
+            {
+                throw new ArgumentException("Destination dates must be within the trip dates.");
             }
             var destination = new Destination
             {
@@ -48,13 +55,13 @@ namespace TravelService.Services
         {
             bool tripExists = await _context.Trips.AnyAsync(t => t.Id == tripId && t.UserId == userId);
 
-            if(!tripExists)
+            if (!tripExists)
             {
                 return false;
             }
             var destination = await _context.Destinations
                 .FirstOrDefaultAsync(d => d.Id == id && d.TripId == tripId);
-            if(destination == null)
+            if (destination == null)
             {
                 return false;
             }
@@ -67,7 +74,7 @@ namespace TravelService.Services
         public async Task<List<DestinationDto>> GetAllByTripAsync(int tripId, int userId)
         {
             bool tripExists = await _context.Trips
-                .AnyAsync(t=>t.Id==tripId && t.UserId==userId);
+                .AnyAsync(t => t.Id == tripId && t.UserId == userId);
             if (!tripExists)
             {
                 return new List<DestinationDto>();
@@ -94,19 +101,27 @@ namespace TravelService.Services
 
         public async Task<DestinationDto?> UpdateAsync(int id, int tripId, UpdateDestinationDto dto, int userId)
         {
-            bool tripExists = await _context.Trips
-               .AnyAsync(t => t.Id == tripId && t.UserId == userId);
+            var trip = await _context.Trips
+    .FirstOrDefaultAsync(t => t.Id == tripId && t.UserId == userId);
 
-            if (!tripExists) return null;
+            if (trip == null)
+            {
+                return null;
+            }
 
             var destination = await _context.Destinations
                 .FirstOrDefaultAsync(d => d.Id == id && d.TripId == tripId);
 
             if (destination == null) return null;
 
-            if (dto.DepartureDate < dto.ArrivalDate)
+            if (dto.ArrivalDate > dto.DepartureDate)
             {
-                throw new ArgumentException("The arrival date cannot be before the departure date.");
+                throw new ArgumentException("Departure date must be on or after arrival date.");
+            }
+
+            if (dto.ArrivalDate < trip.StartDate || dto.DepartureDate > trip.EndDate)
+            {
+                throw new ArgumentException("Destination dates must be within the trip dates.");
             }
             destination.Name = dto.Name;
             destination.Location = dto.Location;

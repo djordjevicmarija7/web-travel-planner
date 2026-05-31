@@ -1,4 +1,4 @@
-﻿using PlanningService.DTOs;
+﻿using Common.DTOs;
 using PlanningService.Models;
 
 namespace PlanningService.Helpers

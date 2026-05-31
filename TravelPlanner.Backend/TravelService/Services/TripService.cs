@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Common.DTOs;
+using Microsoft.EntityFrameworkCore;
 using TravelService.Data;
-using TravelService.DTOs;
 using TravelService.Models;
 
 namespace TravelService.Services
@@ -22,7 +22,7 @@ namespace TravelService.Services
             {
                 throw new ArgumentException("The return date cannot be before the departure date.");
             }
-            if(dto.Budget.HasValue && dto.Budget < 0)
+            if (dto.Budget.HasValue && dto.Budget < 0)
             {
                 throw new ArgumentException("The budget cannot be negative.");
             }

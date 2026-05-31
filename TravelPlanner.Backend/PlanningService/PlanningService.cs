@@ -1,16 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Fabric;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.ServiceFabric.Data;
 using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
-using Microsoft.ServiceFabric.Data;
+using System.Fabric;
 
 namespace PlanningService
 {
@@ -57,7 +49,7 @@ namespace PlanningService
                         }
                         app.UseAuthorization();
                         app.MapControllers();
-                        
+
                         return app;
 
                     }))

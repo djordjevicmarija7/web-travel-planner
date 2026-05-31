@@ -1,11 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Common.DTOs;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.ServiceFabric.Data;
 using Microsoft.ServiceFabric.Data.Collections;
 using PlanningService.Data;
-using PlanningService.DTOs;
-using PlanningService.Models;
 using PlanningService.Helpers;
-using System.Xml;
+using PlanningService.Models;
 
 namespace PlanningService.Services
 {

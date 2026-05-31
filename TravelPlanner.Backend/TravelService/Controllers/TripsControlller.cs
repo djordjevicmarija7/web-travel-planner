@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Common.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using TravelService.DTOs;
 using TravelService.Services;
 
 namespace TravelService.Controllers
@@ -32,7 +32,7 @@ namespace TravelService.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var trip =await _tripService.GetByIdAsync(id, GetUserId());
+            var trip = await _tripService.GetByIdAsync(id, GetUserId());
             if (trip == null)
             {
                 return NotFound();
@@ -52,7 +52,7 @@ namespace TravelService.Controllers
                 var trip = await _tripService.CreateAsync(dto, GetUserId());
                 return CreatedAtAction(nameof(GetById), new { id = trip.Id }, trip);
             }
-            catch(ArgumentException ex)
+            catch (ArgumentException ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
@@ -91,7 +91,7 @@ namespace TravelService.Controllers
             return NoContent();
         }
         [HttpDelete("user/{userId}/all")]
-        [AllowAnonymous] 
+        [AllowAnonymous]
         public async Task<IActionResult> DeleteAllByUser(int userId)
         {
             await _tripService.DeleteAllByUserAsync(userId);

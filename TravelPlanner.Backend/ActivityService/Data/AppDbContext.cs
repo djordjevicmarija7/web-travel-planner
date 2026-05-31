@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using ActivityService.Models;
+﻿using ActivityService.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace ActivityService.Data
 {

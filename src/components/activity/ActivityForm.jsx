@@ -14,7 +14,7 @@ const emptyForm = {
   description: '', estimatedCost: '', status: ActivityStatus.planned,
 };
 
-function ActivityForm({ initialData, onSubmit, onCancel, loading }) {
+function ActivityForm({ initialData, onSubmit, onCancel, loading, tripStartDate, tripEndDate }) {
   const [formData, setFormData] = useState(initialData || emptyForm);
   const [errors, setErrors] = useState({});
   const isEdit = !!initialData;
@@ -25,15 +25,32 @@ function ActivityForm({ initialData, onSubmit, onCancel, loading }) {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   }
 
-  function validate() {
-    const e = {};
-    if (!formData.name.trim()) e.name = 'Activity name is required.';
-    if (!formData.date) e.date = 'Date is required.';
-    if (formData.estimatedCost !== '' && Number(formData.estimatedCost) < 0)
-      e.estimatedCost = 'Cost cannot be negative.';
-    return e;
+function validate() {
+  const e = {};
+
+  if (!formData.name.trim()) e.name = 'Activity name is required.';
+  if (!formData.date) e.date = 'Date is required.';
+
+  if (formData.estimatedCost !== '' && Number(formData.estimatedCost) < 0) {
+    e.estimatedCost = 'Cost cannot be negative.';
   }
 
+  if (formData.date && tripStartDate && tripEndDate) {
+    const activityDate = new Date(formData.date);
+    const startDate = new Date(tripStartDate);
+    const endDate = new Date(tripEndDate);
+
+    activityDate.setHours(0, 0, 0, 0);
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
+
+    if (activityDate < startDate || activityDate > endDate) {
+      e.date = 'Activity date must be within the trip dates.';
+    }
+  }
+
+  return e;
+}
   function handleSubmit(e) {
     e.preventDefault();
     const ve = validate();

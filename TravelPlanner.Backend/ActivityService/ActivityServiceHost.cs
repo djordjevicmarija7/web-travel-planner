@@ -1,13 +1,14 @@
-﻿using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
-using Microsoft.ServiceFabric.Services.Communication.Runtime;
-using Microsoft.ServiceFabric.Services.Runtime;
-using System.Fabric;
+﻿using ActivityService.Clients;
+using ActivityService.Data;
+using ActivityService.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
+using Microsoft.ServiceFabric.Services.Communication.Runtime;
+using Microsoft.ServiceFabric.Services.Runtime;
+using System.Fabric;
 using System.Text;
-using ActivityService.Data;
-using ActivityService.Services;
 
 namespace ActivityService
 {
@@ -36,7 +37,10 @@ namespace ActivityService
                                 builder.Configuration.GetConnectionString("DefaultConnection")));
 
                         builder.Services.AddScoped<IActivityService, ActivityServiceImplementation>();
-
+                        builder.Services.AddHttpClient<TripApiClient>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:5002");
+});
                         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                             .AddJwtBearer(options =>
                             {

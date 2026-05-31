@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using ActivityService.Services;
+using Common.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ActivityService.DTOs;
-using ActivityService.Services;
 
 namespace ActivityService.Controllers
 {
@@ -27,7 +27,7 @@ namespace ActivityService.Controllers
         public async Task<IActionResult> GetById(int tripId, int id)
         {
             var activity = await _activityService.GetByIdAsync(id, tripId);
-            if(activity == null)
+            if (activity == null)
             {
                 return NotFound();
             }
@@ -46,7 +46,7 @@ namespace ActivityService.Controllers
                 var activity = await _activityService.CreateAsync(tripId, dto);
                 return CreatedAtAction(nameof(GetById), new { tripId, id = activity.Id }, activity);
             }
-            catch(ArgumentException ex)
+            catch (ArgumentException ex)
             {
                 return BadRequest(new { message = ex.Message });
             }
