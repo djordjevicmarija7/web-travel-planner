@@ -337,11 +337,13 @@ function SharedTripPage() {
 
         <Section
           label={`Activities (${activities.length})`}
-          action={isEdit && (
-            <Button size="sm" variant="accent" onClick={() => setActivityModal(true)}>
-              + Add
-            </Button>
-          )}
+          action={
+            isEdit && (
+              <Button size="sm" variant="accent" onClick={() => setActivityModal(true)}>
+                + Add
+              </Button>
+            )
+          }
         >
           {activities.length === 0 ? (
             <EmptyState
@@ -434,7 +436,9 @@ function SharedTripPage() {
                     onClick={() => isEdit && handleToggleCheckItem(item)}
                     style={{
                       ...checkBox,
-                      borderColor: item.isCompleted ? 'var(--status-completed)' : 'var(--border-strong, var(--border-default))',
+                      borderColor: item.isCompleted
+                        ? 'var(--status-completed)'
+                        : 'var(--border-strong, var(--border-default))',
                       background: item.isCompleted ? 'var(--status-completed)' : 'transparent',
                       cursor: isEdit ? 'pointer' : 'default',
                     }}
@@ -600,9 +604,7 @@ function SharedActivityCard({ activity, isEdit, onEdit, onDelete }) {
 
         {activity.location && <div style={activityLocation}>📍 {activity.location}</div>}
         {activity.description && <div style={activityDescription}>{activity.description}</div>}
-        {activity.estimatedCost != null && (
-          <div style={activityCost}>€ {activity.estimatedCost}</div>
-        )}
+        {activity.estimatedCost != null && <div style={activityCost}>€ {activity.estimatedCost}</div>}
       </div>
 
       {isEdit && (
@@ -1121,6 +1123,71 @@ const actionBtn = {
   fontFamily: 'var(--font-body)',
   transition: 'all var(--transition-fast)',
   letterSpacing: '0.03em',
+};
+
+const activityCard = {
+  background: 'var(--bg-elevated)',
+  border: '1px solid var(--border-subtle)',
+  borderLeft: '3px solid var(--text-muted)',
+  borderRadius: '16px',
+  padding: '12px 14px',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'flex-start',
+  transition: 'all var(--transition-fast)',
+};
+
+const activityTopRow = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+  marginBottom: '3px',
+  flexWrap: 'wrap',
+};
+
+const activityName = {
+  fontWeight: '500',
+  fontSize: '13px',
+};
+
+const activityTime = {
+  fontSize: '10px',
+  color: 'var(--text-muted)',
+  fontFamily: 'var(--font-mono)',
+};
+
+const statusTag = {
+  fontSize: '9px',
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  padding: '2px 7px',
+  borderRadius: '10px',
+  fontWeight: '500',
+};
+
+const activityLocation = {
+  fontSize: '11px',
+  color: 'var(--text-secondary)',
+};
+
+const activityDescription = {
+  fontSize: '11px',
+  color: 'var(--text-muted)',
+  marginTop: '2px',
+};
+
+const activityCost = {
+  fontSize: '11px',
+  color: 'var(--accent-primary)',
+  marginTop: '3px',
+  fontFamily: 'var(--font-mono)',
+};
+
+const activityActions = {
+  display: 'flex',
+  gap: '5px',
+  marginLeft: '10px',
+  flexShrink: 0,
 };
 
 export default SharedTripPage;
