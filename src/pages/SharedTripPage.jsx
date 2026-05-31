@@ -7,22 +7,34 @@ import ActivityForm from '../components/activity/ActivityForm';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import { generateTripPdf } from '../utils/generateTripPdf';
 
-const STATUS_LABELS = { planned: 'Planned', reserved: 'Reserved', completed: 'Completed', cancelled: 'Cancelled' };
+const STATUS_LABELS = {
+  planned: 'Planned',
+  reserved: 'Reserved',
+  completed: 'Completed',
+  cancelled: 'Cancelled',
+};
+
 const STATUS_COLORS = {
-  planned:   'var(--status-planned)',
-  reserved:  'var(--status-reserved)',
+  planned: 'var(--status-planned)',
+  reserved: 'var(--status-reserved)',
   completed: 'var(--status-completed)',
   cancelled: 'var(--status-cancelled)',
 };
+
 const STATUS_BG = {
-  planned:   'rgba(91,156,246,0.12)',
-  reserved:  'rgba(240,164,74,0.12)',
+  planned: 'rgba(91,156,246,0.12)',
+  reserved: 'rgba(240,164,74,0.12)',
   completed: 'rgba(78,201,148,0.12)',
   cancelled: 'rgba(240,112,112,0.12)',
 };
+
 const CATEGORY_ICONS = {
-  transport: '✈', accommodation: '🏨', food: '🍽',
-  tickets: '🎟', shopping: '🛍', other: '📌',
+  transport: '✈',
+  accommodation: '🏨',
+  food: '🍽',
+  tickets: '🎟',
+  shopping: '🛍',
+  other: '📌',
 };
 
 function SharedTripPage() {
@@ -30,127 +42,153 @@ function SharedTripPage() {
   const { token } = useParams();
   const navigate = useNavigate();
 
-  const [data, setData]       = useState(null);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState('');
+  const [error, setError] = useState('');
 
   const [activities, setActivities] = useState([]);
-  const [checklist, setChecklist]   = useState([]);
+  const [checklist, setChecklist] = useState([]);
 
-  const [activityModal, setActivityModal]   = useState(false);
+  const [activityModal, setActivityModal] = useState(false);
   const [activityLoading, setActivityLoading] = useState(false);
-  const [editTarget, setEditTarget]         = useState(null);
-  const [newCheckItem, setNewCheckItem]     = useState('');
-  const [checkLoading, setCheckLoading]     = useState(false);
-  const [pdfLoading, setPdfLoading]         = useState(false);
-  const [confirmDialog, setConfirmDialog]   = useState({ isOpen: false, id: null });
+  const [editTarget, setEditTarget] = useState(null);
+  const [newCheckItem, setNewCheckItem] = useState('');
+  const [checkLoading, setCheckLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
 
-  useEffect(() => { fetchSharedTrip(); }, [token]);
+  useEffect(() => {
+    fetchSharedTrip();
+  }, [token]);
 
   async function fetchSharedTrip() {
     try {
       setLoading(true);
       const result = await shareService.getSharedTrip(token);
       setData(result);
-      // Activities and checklist come embedded in trip DTO
       setActivities(result.trip?.activities || []);
       setChecklist(result.trip?.checklistItems || result.trip?.checklist || []);
-    } catch { setError('This link is invalid or has expired.'); }
-    finally { setLoading(false); }
+    } catch {
+      setError('This link is invalid or has expired.');
+    } finally {
+      setLoading(false);
+    }
   }
 
-  // ── Activity handlers ─────────────────────────────────────────────────────
   async function handleAddActivity(formData) {
     try {
       setActivityLoading(true);
       const created = await sharedEditService.createActivity(token, formData);
-      setActivities(prev => [...prev, created]);
+      setActivities((prev) => [...prev, created]);
       setActivityModal(false);
-    } catch { alert('Error adding activity.'); }
-    finally { setActivityLoading(false); }
+    } catch {
+      alert('Error adding activity.');
+    } finally {
+      setActivityLoading(false);
+    }
   }
 
   async function handleUpdateActivity(formData) {
     try {
       setActivityLoading(true);
       const updated = await sharedEditService.updateActivity(token, editTarget.id, formData);
-      setActivities(prev => prev.map(a => a.id === updated.id ? updated : a));
+      setActivities((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
       setEditTarget(null);
-    } catch { alert('Error updating activity.'); }
-    finally { setActivityLoading(false); }
+    } catch {
+      alert('Error updating activity.');
+    } finally {
+      setActivityLoading(false);
+    }
   }
 
-  function handleDeleteActivity(id) { setConfirmDialog({ isOpen: true, id }); }
+  function handleDeleteActivity(id) {
+    setConfirmDialog({ isOpen: true, id });
+  }
 
   async function handleDeleteActivityConfirmed() {
     const id = confirmDialog.id;
     setConfirmDialog({ isOpen: false, id: null });
+
     try {
       await sharedEditService.deleteActivity(token, id);
-      setActivities(prev => prev.filter(a => a.id !== id));
-    } catch { alert('Error deleting activity.'); }
+      setActivities((prev) => prev.filter((a) => a.id !== id));
+    } catch {
+      alert('Error deleting activity.');
+    }
   }
 
-  // ── Checklist handlers ────────────────────────────────────────────────────
   async function handleAddCheckItem(e) {
     e.preventDefault();
     if (!newCheckItem.trim()) return;
+
     try {
       setCheckLoading(true);
       const created = await sharedEditService.createChecklistItem(token, newCheckItem.trim());
-      setChecklist(prev => [...prev, created]);
+      setChecklist((prev) => [...prev, created]);
       setNewCheckItem('');
-    } catch { alert('Error adding item.'); }
-    finally { setCheckLoading(false); }
+    } catch {
+      alert('Error adding item.');
+    } finally {
+      setCheckLoading(false);
+    }
   }
 
   async function handleToggleCheckItem(item) {
     try {
       const updated = await sharedEditService.toggleChecklistItem(token, item.id, !item.isCompleted);
-      setChecklist(prev => prev.map(i => i.id === updated.id ? updated : i));
-    } catch { alert('Error updating item.'); }
+      setChecklist((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+    } catch {
+      alert('Error updating item.');
+    }
   }
 
   async function handleDeleteCheckItem(id) {
     try {
       await sharedEditService.deleteChecklistItem(token, id);
-      setChecklist(prev => prev.filter(i => i.id !== id));
-    } catch { alert('Error deleting item.'); }
+      setChecklist((prev) => prev.filter((i) => i.id !== id));
+    } catch {
+      alert('Error deleting item.');
+    }
   }
 
-  // ── PDF ───────────────────────────────────────────────────────────────────
   function handleDownloadPdf() {
     if (!data?.trip) return;
     setPdfLoading(true);
     try {
       generateTripPdf({ ...data.trip, activities, checklist });
-    } finally { setPdfLoading(false); }
+    } finally {
+      setPdfLoading(false);
+    }
   }
 
-  // ── Loading / error states ────────────────────────────────────────────────
-  if (loading) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: '300', color: 'var(--accent-primary)' }}>
-        Loading...
+  if (loading) {
+    return (
+      <div style={loadingWrap}>
+        <div style={loadingCard}>Loading...</div>
       </div>
-    </div>
-  );
+    );
+  }
 
-  if (error) return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '20px', padding: '24px' }}>
-      <div style={{ fontSize: '52px' }}>🔒</div>
-      <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: '300', color: 'var(--text-secondary)', textAlign: 'center' }}>{error}</h2>
-      <button onClick={() => navigate('/login')} style={ctaBtn}>Go to Login</button>
-    </div>
-  );
+  if (error) {
+    return (
+      <div style={errorWrap}>
+        <div style={{ fontSize: '52px' }}>🔒</div>
+        <h2 style={errorTitle}>{error}</h2>
+        <button onClick={() => navigate('/login')} style={ctaBtn}>
+          Go to Login
+        </button>
+      </div>
+    );
+  }
 
   if (!data) return null;
+
   const { trip, accessType } = data;
   const isEdit = accessType === 'edit';
 
-  const totalSpent     = (trip.expenses || []).reduce((s, e) => s + (e.amount || 0), 0);
-  const completedCheck = checklist.filter(i => i.isCompleted).length;
-  const sortedActs     = [...activities].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
+  const totalSpent = (trip.expenses || []).reduce((s, e) => s + (e.amount || 0), 0);
+  const completedCheck = checklist.filter((i) => i.isCompleted).length;
+  const sortedActs = [...activities].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
 
   const grouped = sortedActs.reduce((acc, a) => {
     const d = a.date?.slice(0, 10);
@@ -161,162 +199,173 @@ function SharedTripPage() {
   const sortedDates = Object.keys(grouped).sort();
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-page, var(--bg-surface))' }}>
-
-      {/* ── Minimal header ────────────────────────────────────────────────── */}
-      <header style={{
-        borderBottom: '1px solid var(--border-subtle)',
-        background: 'rgba(10,10,16,0.9)',
-        backdropFilter: 'blur(20px)',
-        position: 'sticky', top: 0, zIndex: 200,
-      }}>
-        <div style={{ maxWidth: '760px', margin: '0 auto', padding: '0 24px', height: '56px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '24px', height: '24px', borderRadius: '5px', background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-glow))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#0c0c12' }}>✈</div>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: 'var(--accent-primary)', letterSpacing: '0.04em' }}>Wanderlust</span>
+    <div style={pageShell}>
+      <header style={topHeader}>
+        <div style={headerInner}>
+          <div style={brandWrap}>
+            <div style={brandIcon}>✈</div>
+            <span style={brandText}>Wanderlust</span>
           </div>
+
           <div style={{ flex: 1 }} />
+
           <Badge variant={accessType}>{accessType.toUpperCase()} Access</Badge>
+
           <button
             onClick={handleDownloadPdf}
             disabled={pdfLoading}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '7px 14px',
-              background: 'var(--bg-elevated)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-md)',
-              color: 'var(--accent-primary)',
-              fontSize: '11px', fontWeight: '500',
-              cursor: pdfLoading ? 'not-allowed' : 'pointer',
-              opacity: pdfLoading ? 0.6 : 1,
-              transition: 'border-color 0.15s',
-              whiteSpace: 'nowrap',
+            style={pdfBtn}
+            onMouseEnter={(e) => {
+              if (!pdfLoading) e.currentTarget.style.borderColor = 'var(--accent-border)';
             }}
-            onMouseEnter={e => { if (!pdfLoading) e.currentTarget.style.borderColor = 'var(--accent-border)'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border-subtle)';
+            }}
           >
             {pdfLoading ? '⏳' : '⬇'} {pdfLoading ? 'Generating...' : 'PDF'}
           </button>
         </div>
       </header>
 
-      <main style={{ maxWidth: '760px', margin: '0 auto', padding: '32px 24px 80px' }}>
-
-        {/* ── Hero ──────────────────────────────────────────────────────────── */}
-        <div style={{ marginBottom: '28px' }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '6px',
-            padding: '4px 12px', borderRadius: '20px', marginBottom: '12px', fontSize: '11px', fontWeight: '500',
-            background: isEdit ? 'rgba(240,164,74,0.1)' : 'rgba(91,156,246,0.1)',
-            border: `1px solid ${isEdit ? 'rgba(240,164,74,0.25)' : 'rgba(91,156,246,0.25)'}`,
-            color: isEdit ? 'var(--status-reserved)' : 'var(--status-planned)',
-          }}>
+      <main style={mainWrap}>
+        <section style={heroCard}>
+          <div
+            style={{
+              ...accessPill,
+              background: isEdit ? 'rgba(240,164,74,0.1)' : 'rgba(91,156,246,0.1)',
+              borderColor: isEdit ? 'rgba(240,164,74,0.25)' : 'rgba(91,156,246,0.25)',
+              color: isEdit ? 'var(--status-reserved)' : 'var(--status-planned)',
+            }}
+          >
             {isEdit ? '✏ Edit access' : '👁 View only'}
           </div>
 
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '40px', fontWeight: '300', lineHeight: 1.1, marginBottom: '6px' }}>
-            {trip.name}
-          </h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '13px', fontFamily: 'var(--font-mono)' }}>
-            {trip.startDate?.slice(0,10)} – {trip.endDate?.slice(0,10)}
-          </p>
-        </div>
-
-        {/* ── Stats strip ───────────────────────────────────────────────────── */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '24px' }}>
-          {[
-            trip.budget != null && { label: 'Budget', value: `€ ${trip.budget.toLocaleString()}`, accent: true },
-            activities.length  > 0 && { label: 'Activities',   value: activities.length },
-            checklist.length   > 0 && { label: 'Packed',       value: `${completedCheck}/${checklist.length}` },
-            (trip.expenses||[]).length > 0 && { label: 'Spent', value: `€ ${totalSpent.toFixed(2)}` },
-          ].filter(Boolean).map((s) => (
-            <div key={s.label} style={{
-              background: s.accent ? 'var(--accent-subtle)' : 'var(--bg-elevated)',
-              border: `1px solid ${s.accent ? 'var(--accent-border)' : 'var(--border-subtle)'}`,
-              borderRadius: 'var(--radius-md)', padding: '10px 16px',
-            }}>
-              <div style={{ fontSize: '9px', letterSpacing: '0.09em', textTransform: 'uppercase', color: s.accent ? 'var(--accent-dim)' : 'var(--text-muted)', marginBottom: '3px' }}>{s.label}</div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: '18px', fontWeight: '300', color: s.accent ? 'var(--accent-primary)' : 'var(--text-primary)' }}>{s.value}</div>
+          <div style={heroGrid}>
+            <div>
+              <h1 style={heroTitle}>{trip.name}</h1>
+              <p style={heroMeta}>
+                {trip.startDate?.slice(0, 10)} – {trip.endDate?.slice(0, 10)}
+              </p>
             </div>
-          ))}
-        </div>
 
-        {/* ── Description / Notes ───────────────────────────────────────────── */}
+            <div style={heroSideCard}>
+              <div style={heroSideLabel}>Trip overview</div>
+              <div style={heroSideValue}>
+                {activities.length} activities · {checklist.length} checklist items
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section style={statsGrid}>
+          {[
+            trip.budget != null && {
+              label: 'Budget',
+              value: `€ ${trip.budget.toLocaleString()}`,
+              accent: true,
+            },
+            activities.length > 0 && { label: 'Activities', value: activities.length },
+            checklist.length > 0 && { label: 'Packed', value: `${completedCheck}/${checklist.length}` },
+            (trip.expenses || []).length > 0 && { label: 'Spent', value: `€ ${totalSpent.toFixed(2)}` },
+          ]
+            .filter(Boolean)
+            .map((s) => (
+              <div
+                key={s.label}
+                style={{
+                  ...statCard,
+                  background: s.accent ? 'var(--accent-subtle)' : 'var(--bg-elevated)',
+                  borderColor: s.accent ? 'var(--accent-border)' : 'var(--border-subtle)',
+                }}
+              >
+                <div style={{ ...statLabel, color: s.accent ? 'var(--accent-dim)' : 'var(--text-muted)' }}>
+                  {s.label}
+                </div>
+                <div style={{ ...statValue, color: s.accent ? 'var(--accent-primary)' : 'var(--text-primary)' }}>
+                  {s.value}
+                </div>
+              </div>
+            ))}
+        </section>
+
         {(trip.description || trip.notes) && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '28px' }}>
-            {trip.description && (
-              <InfoBlock label="Description">{trip.description}</InfoBlock>
-            )}
+          <section style={stackedSection}>
+            {trip.description && <InfoBlock label="Description">{trip.description}</InfoBlock>}
             {trip.notes && (
               <InfoBlock label="Notes">
-                <pre style={{ fontFamily: 'var(--font-body)', fontSize: '13px', whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.65, color: 'var(--text-secondary)' }}>{trip.notes}</pre>
+                <pre style={notesText}>{trip.notes}</pre>
               </InfoBlock>
             )}
-          </div>
+          </section>
         )}
 
-        {/* ── Destinations ──────────────────────────────────────────────────── */}
         {(trip.destinations || []).length > 0 && (
           <Section label={`Destinations (${trip.destinations.length})`}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={cardList}>
               {[...trip.destinations]
                 .sort((a, b) => new Date(a.arrivalDate) - new Date(b.arrivalDate))
                 .map((dest) => {
                   const nights = Math.ceil((new Date(dest.departureDate) - new Date(dest.arrivalDate)) / 86400000);
+
                   return (
-                    <div key={dest.id} style={{
-                      background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-                      borderLeft: '3px solid var(--accent-primary)',
-                      borderRadius: 'var(--radius-md)', padding: '14px 16px',
-                    }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                    <div key={dest.id} style={destinationCard}>
+                      <div style={destinationHeader}>
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', flexWrap: 'wrap' }}>
-                            <span style={{ fontFamily: 'var(--font-display)', fontSize: '17px' }}>{dest.name}</span>
+                          <div style={destinationTitleRow}>
+                            <span style={destinationTitle}>{dest.name}</span>
                             {nights > 0 && (
-                              <span style={{ fontSize: '9px', color: 'var(--accent-primary)', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', borderRadius: '10px', padding: '2px 7px' }}>
+                              <span style={nightBadge}>
                                 {nights} night{nights !== 1 ? 's' : ''}
                               </span>
                             )}
                           </div>
-                          {dest.location && <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>📍 {dest.location}</div>}
+                          {dest.location && <div style={destinationLocation}>📍 {dest.location}</div>}
                         </div>
-                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <div style={{ fontSize: '11px', color: 'var(--accent-primary)', fontFamily: 'var(--font-mono)' }}>
-                            {dest.arrivalDate?.slice(0,10)} → {dest.departureDate?.slice(0,10)}
-                          </div>
+
+                        <div style={destinationDates}>
+                          {dest.arrivalDate?.slice(0, 10)} → {dest.departureDate?.slice(0, 10)}
                         </div>
                       </div>
-                      {dest.description && <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px', lineHeight: 1.55 }}>{dest.description}</p>}
+
+                      {dest.description && <p style={mutedText}>{dest.description}</p>}
                     </div>
                   );
-                })
-              }
+                })}
             </div>
           </Section>
         )}
 
-        {/* ── Activities ────────────────────────────────────────────────────── */}
         <Section
           label={`Activities (${activities.length})`}
           action={isEdit && (
-            <Button size="sm" variant="accent" onClick={() => setActivityModal(true)}>+ Add</Button>
+            <Button size="sm" variant="accent" onClick={() => setActivityModal(true)}>
+              + Add
+            </Button>
           )}
         >
           {activities.length === 0 ? (
-            <EmptyState icon="🗓" title="No activities" description={isEdit ? 'Add the first activity.' : 'No activities planned yet.'} />
+            <EmptyState
+              icon="🗓"
+              title="No activities"
+              description={isEdit ? 'Add the first activity.' : 'No activities planned yet.'}
+            />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={timelineWrap}>
               {sortedDates.map((date) => (
                 <div key={date}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                    <div style={{ width: '2.5px', height: '16px', background: 'var(--accent-primary)', borderRadius: '2px' }} />
-                    <span style={{ fontSize: '10px', fontWeight: '500', letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                      {new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                  <div style={dateLabelRow}>
+                    <div style={dateMark} />
+                    <span style={dateLabel}>
+                      {new Date(date + 'T00:00:00').toLocaleDateString('en-GB', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric',
+                      })}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+
+                  <div style={cardList}>
                     {grouped[date].map((activity) => (
                       <SharedActivityCard
                         key={activity.id}
@@ -333,11 +382,7 @@ function SharedTripPage() {
           )}
         </Section>
 
-        {/* ── Packing list ──────────────────────────────────────────────────── */}
-        <Section
-          label={`Packing List (${completedCheck}/${checklist.length})`}
-          action={null}
-        >
+        <Section label={`Packing List (${completedCheck}/${checklist.length})`}>
           {checklist.length > 0 && (
             <div style={{ marginBottom: '14px' }}>
               <ProgressBar
@@ -345,18 +390,20 @@ function SharedTripPage() {
                 max={checklist.length}
                 color={completedCheck === checklist.length ? 'var(--status-completed)' : undefined}
               />
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '5px' }}>
-                {completedCheck === checklist.length && checklist.length > 0 ? '✓ All packed!' : `${checklist.length - completedCheck} item${checklist.length - completedCheck !== 1 ? 's' : ''} remaining`}
+              <div style={miniNote}>
+                {completedCheck === checklist.length && checklist.length > 0
+                  ? '✓ All packed!'
+                  : `${checklist.length - completedCheck} item${checklist.length - completedCheck !== 1 ? 's' : ''} remaining`}
               </div>
             </div>
           )}
 
           {isEdit && (
-            <form onSubmit={handleAddCheckItem} style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
+            <form onSubmit={handleAddCheckItem} style={checkForm}>
               <div style={{ flex: 1 }}>
                 <Input
                   value={newCheckItem}
-                  onChange={e => setNewCheckItem(e.target.value)}
+                  onChange={(e) => setNewCheckItem(e.target.value)}
                   placeholder="e.g. Passport, charger..."
                 />
               </div>
@@ -367,46 +414,50 @@ function SharedTripPage() {
           )}
 
           {checklist.length === 0 ? (
-            <EmptyState icon="✓" title="Checklist is empty" description={isEdit ? 'Add items using the form above.' : 'No items yet.'} />
+            <EmptyState
+              icon="✓"
+              title="Checklist is empty"
+              description={isEdit ? 'Add items using the form above.' : 'No items yet.'}
+            />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {[...checklist.filter(i => !i.isCompleted), ...checklist.filter(i => i.isCompleted)].map((item) => (
-                <div key={item.id} style={{
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                  padding: '9px 13px',
-                  background: item.isCompleted ? 'rgba(78,201,148,0.04)' : 'var(--bg-elevated)',
-                  border: `1px solid ${item.isCompleted ? 'rgba(78,201,148,0.15)' : 'var(--border-subtle)'}`,
-                  borderRadius: 'var(--radius-md)',
-                  transition: 'all var(--transition-fast)',
-                }}>
+            <div style={checklistWrap}>
+              {[...checklist.filter((i) => !i.isCompleted), ...checklist.filter((i) => i.isCompleted)].map((item) => (
+                <div
+                  key={item.id}
+                  style={{
+                    ...checkItemCard,
+                    background: item.isCompleted ? 'rgba(78,201,148,0.04)' : 'var(--bg-elevated)',
+                    borderColor: item.isCompleted ? 'rgba(78,201,148,0.15)' : 'var(--border-subtle)',
+                  }}
+                >
                   <div
                     onClick={() => isEdit && handleToggleCheckItem(item)}
                     style={{
-                      width: '17px', height: '17px', borderRadius: '4px', flexShrink: 0,
-                      border: `2px solid ${item.isCompleted ? 'var(--status-completed)' : 'var(--border-strong, var(--border-default))'}`,
+                      ...checkBox,
+                      borderColor: item.isCompleted ? 'var(--status-completed)' : 'var(--border-strong, var(--border-default))',
                       background: item.isCompleted ? 'var(--status-completed)' : 'transparent',
                       cursor: isEdit ? 'pointer' : 'default',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'all var(--transition-fast)',
                     }}
                   >
-                    {item.isCompleted && (
-                      <span style={{ color: '#0c0c12', fontSize: '10px', fontWeight: '700', lineHeight: 1 }}>✓</span>
-                    )}
+                    {item.isCompleted && <span style={checkMark}>✓</span>}
                   </div>
-                  <span style={{
-                    flex: 1, fontSize: '13px',
-                    textDecoration: item.isCompleted ? 'line-through' : 'none',
-                    color: item.isCompleted ? 'var(--text-muted)' : 'var(--text-primary)',
-                  }}>
+
+                  <span
+                    style={{
+                      ...checkText,
+                      textDecoration: item.isCompleted ? 'line-through' : 'none',
+                      color: item.isCompleted ? 'var(--text-muted)' : 'var(--text-primary)',
+                    }}
+                  >
                     {item.title ?? item.name}
                   </span>
+
                   {isEdit && (
                     <button
                       onClick={() => handleDeleteCheckItem(item.id)}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-faint, var(--text-muted))', fontSize: '13px', padding: '2px 4px' }}
-                      onMouseEnter={e => e.target.style.color = 'var(--status-cancelled)'}
-                      onMouseLeave={e => e.target.style.color = 'var(--text-faint, var(--text-muted))'}
+                      style={deleteIconBtn}
+                      onMouseEnter={(e) => (e.target.style.color = 'var(--status-cancelled)')}
+                      onMouseLeave={(e) => (e.target.style.color = 'var(--text-faint, var(--text-muted))')}
                     >
                       ✕
                     </button>
@@ -417,51 +468,46 @@ function SharedTripPage() {
           )}
         </Section>
 
-        {/* ── Expenses (read-only view) ──────────────────────────────────────── */}
         {(trip.expenses || []).length > 0 && (
           <Section label={`Expenses (${trip.expenses.length})`}>
             {trip.budget != null && (
               <div style={{ marginBottom: '14px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                <div style={budgetRow}>
                   <span>Budget usage</span>
-                  <span style={{ fontFamily: 'var(--font-mono)' }}>€ {totalSpent.toFixed(2)} / € {trip.budget.toLocaleString()}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>
+                    € {totalSpent.toFixed(2)} / € {trip.budget.toLocaleString()}
+                  </span>
                 </div>
                 <ProgressBar value={totalSpent} max={trip.budget} />
               </div>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+
+            <div style={expenseList}>
               {trip.expenses.map((expense) => (
-                <div key={expense.id} style={{
-                  background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-md)', padding: '10px 14px',
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '16px' }}>{CATEGORY_ICONS[expense.category] || '📌'}</span>
+                <div key={expense.id} style={expenseCard}>
+                  <div style={expenseLeft}>
+                    <span style={expenseIcon}>{CATEGORY_ICONS[expense.category] || '📌'}</span>
                     <div>
-                      <div style={{ fontSize: '13px', fontWeight: '500' }}>{expense.name}</div>
-                      <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{expense.date?.slice(0,10)}</div>
+                      <div style={expenseName}>{expense.name}</div>
+                      <div style={expenseDate}>{expense.date?.slice(0, 10)}</div>
                     </div>
                   </div>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--text-primary)' }}>
-                    € {expense.amount?.toFixed(2)}
-                  </span>
+
+                  <span style={expenseAmount}>€ {expense.amount?.toFixed(2)}</span>
                 </div>
               ))}
             </div>
           </Section>
         )}
 
-        {/* ── Footer CTA ────────────────────────────────────────────────────── */}
-        <div style={{ marginTop: '56px', paddingTop: '32px', borderTop: '1px solid var(--border-subtle)', textAlign: 'center' }}>
-          <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginBottom: '14px' }}>
-            Plan your own travels with Wanderlust
-          </p>
-          <button onClick={() => navigate('/login')} style={ctaBtn}>Get Started →</button>
+        <div style={footerCta}>
+          <p style={footerText}>Plan your own travels with Wanderlust</p>
+          <button onClick={() => navigate('/login')} style={ctaBtn}>
+            Get Started →
+          </button>
         </div>
       </main>
 
-      {/* ── Modals ────────────────────────────────────────────────────────────── */}
       <Modal open={activityModal} onClose={() => setActivityModal(false)} title="New Activity">
         <ActivityForm
           onSubmit={handleAddActivity}
@@ -475,7 +521,7 @@ function SharedTripPage() {
           <ActivityForm
             initialData={{
               name: editTarget.name || '',
-              date: editTarget.date?.slice(0,10) || '',
+              date: editTarget.date?.slice(0, 10) || '',
               time: editTarget.time || '',
               location: editTarget.location || '',
               description: editTarget.description || '',
@@ -503,100 +549,578 @@ function SharedTripPage() {
   );
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
-
 function Section({ label, action, children }) {
   return (
-    <div style={{ marginBottom: '32px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-        <div style={{ fontSize: '10px', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-          {label}
-        </div>
+    <section style={sectionBlock}>
+      <div style={sectionHeader}>
+        <div style={sectionLabel}>{label}</div>
         {action}
       </div>
       {children}
-    </div>
+    </section>
   );
 }
 
 function InfoBlock({ label, children }) {
   return (
-    <div style={{
-      background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-      borderLeft: '2px solid var(--accent-primary)',
-      borderRadius: 'var(--radius-md)', padding: '14px 16px',
-    }}>
-      <div style={{ fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--text-muted)', marginBottom: '6px' }}>{label}</div>
-      <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.65 }}>{children}</div>
+    <div style={infoCard}>
+      <div style={infoLabel}>{label}</div>
+      <div style={infoContent}>{children}</div>
     </div>
   );
 }
 
 function SharedActivityCard({ activity, isEdit, onEdit, onDelete }) {
   const [hovered, setHovered] = useState(false);
+
   return (
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: 'var(--bg-elevated)',
-        border: `1px solid ${hovered ? 'var(--border-default)' : 'var(--border-subtle)'}`,
-        borderLeft: `3px solid ${STATUS_COLORS[activity.status] || 'var(--text-muted)'}`,
-        padding: '11px 14px', borderRadius: 'var(--radius-md)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-        transition: 'all var(--transition-fast)',
+        ...activityCard,
+        borderColor: hovered ? 'var(--border-default)' : 'var(--border-subtle)',
+        borderLeftColor: STATUS_COLORS[activity.status] || 'var(--text-muted)',
       }}
     >
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', flexWrap: 'wrap' }}>
-          <span style={{ fontWeight: '500', fontSize: '13px' }}>{activity.name}</span>
-          {activity.time && (
-            <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
-              {activity.time.slice(0,5)}
-            </span>
-          )}
-          <span style={{
-            fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.06em',
-            padding: '2px 7px', borderRadius: '10px', fontWeight: '500',
-            background: STATUS_BG[activity.status],
-            color: STATUS_COLORS[activity.status],
-          }}>
+        <div style={activityTopRow}>
+          <span style={activityName}>{activity.name}</span>
+          {activity.time && <span style={activityTime}>{activity.time.slice(0, 5)}</span>}
+          <span
+            style={{
+              ...statusTag,
+              background: STATUS_BG[activity.status],
+              color: STATUS_COLORS[activity.status],
+            }}
+          >
             {STATUS_LABELS[activity.status]}
           </span>
         </div>
-        {activity.location && (
-          <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>📍 {activity.location}</div>
-        )}
-        {activity.description && (
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{activity.description}</div>
-        )}
+
+        {activity.location && <div style={activityLocation}>📍 {activity.location}</div>}
+        {activity.description && <div style={activityDescription}>{activity.description}</div>}
         {activity.estimatedCost != null && (
-          <div style={{ fontSize: '11px', color: 'var(--accent-primary)', marginTop: '3px', fontFamily: 'var(--font-mono)' }}>
-            € {activity.estimatedCost}
-          </div>
+          <div style={activityCost}>€ {activity.estimatedCost}</div>
         )}
       </div>
+
       {isEdit && (
-        <div style={{ display: 'flex', gap: '5px', marginLeft: '10px', flexShrink: 0 }}>
-          <button onClick={onEdit} style={actionBtn}>Edit</button>
-          <button onClick={onDelete} style={{ ...actionBtn, color: 'var(--status-cancelled)', borderColor: 'rgba(240,112,112,0.2)' }}>✕</button>
+        <div style={activityActions}>
+          <button onClick={onEdit} style={actionBtn}>
+            Edit
+          </button>
+          <button
+            onClick={onDelete}
+            style={{ ...actionBtn, color: 'var(--status-cancelled)', borderColor: 'rgba(240,112,112,0.2)' }}
+          >
+            ✕
+          </button>
         </div>
       )}
     </div>
   );
 }
 
+const pageShell = {
+  minHeight: '100vh',
+  background:
+    'radial-gradient(circle at top, rgba(91,156,246,0.08), transparent 34%), var(--bg-page, var(--bg-surface))',
+};
+
+const topHeader = {
+  borderBottom: '1px solid var(--border-subtle)',
+  background: 'rgba(10,10,16,0.9)',
+  backdropFilter: 'blur(20px)',
+  position: 'sticky',
+  top: 0,
+  zIndex: 200,
+};
+
+const headerInner = {
+  maxWidth: '960px',
+  margin: '0 auto',
+  padding: '0 24px',
+  minHeight: '60px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '12px',
+};
+
+const brandWrap = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+};
+
+const brandIcon = {
+  width: '26px',
+  height: '26px',
+  borderRadius: '7px',
+  background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-glow))',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '12px',
+  color: '#0c0c12',
+};
+
+const brandText = {
+  fontFamily: 'var(--font-display)',
+  fontSize: '16px',
+  color: 'var(--accent-primary)',
+  letterSpacing: '0.04em',
+};
+
+const pdfBtn = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '6px',
+  padding: '7px 14px',
+  background: 'var(--bg-elevated)',
+  border: '1px solid var(--border-subtle)',
+  borderRadius: 'var(--radius-md)',
+  color: 'var(--accent-primary)',
+  fontSize: '11px',
+  fontWeight: '500',
+  cursor: 'pointer',
+  opacity: 1,
+  transition: 'border-color 0.15s, transform 0.15s',
+  whiteSpace: 'nowrap',
+};
+
+const mainWrap = {
+  maxWidth: '960px',
+  margin: '0 auto',
+  padding: '32px 24px 80px',
+};
+
+const heroCard = {
+  background: 'linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0))',
+  border: '1px solid var(--border-subtle)',
+  borderRadius: '24px',
+  padding: '22px 22px 20px',
+  marginBottom: '22px',
+  boxShadow: '0 18px 40px rgba(0,0,0,0.08)',
+};
+
+const accessPill = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '6px',
+  padding: '4px 12px',
+  borderRadius: '999px',
+  marginBottom: '14px',
+  fontSize: '11px',
+  fontWeight: '600',
+  border: '1px solid transparent',
+};
+
+const heroGrid = {
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1fr) minmax(240px, 280px)',
+  gap: '18px',
+  alignItems: 'end',
+};
+
+const heroTitle = {
+  fontFamily: 'var(--font-display)',
+  fontSize: '44px',
+  fontWeight: '300',
+  lineHeight: 1.05,
+  margin: 0,
+};
+
+const heroMeta = {
+  color: 'var(--text-muted)',
+  fontSize: '13px',
+  fontFamily: 'var(--font-mono)',
+  marginTop: '8px',
+  marginBottom: 0,
+};
+
+const heroSideCard = {
+  background: 'var(--bg-elevated)',
+  border: '1px solid var(--border-subtle)',
+  borderRadius: '18px',
+  padding: '14px 16px',
+};
+
+const heroSideLabel = {
+  fontSize: '10px',
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+  color: 'var(--text-muted)',
+  marginBottom: '6px',
+  fontWeight: '600',
+};
+
+const heroSideValue = {
+  fontSize: '13px',
+  color: 'var(--text-secondary)',
+  lineHeight: 1.6,
+};
+
+const statsGrid = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+  gap: '10px',
+  marginBottom: '24px',
+};
+
+const statCard = {
+  border: '1px solid',
+  borderRadius: '18px',
+  padding: '12px 16px',
+  boxShadow: '0 10px 24px rgba(0,0,0,0.04)',
+};
+
+const statLabel = {
+  fontSize: '9px',
+  letterSpacing: '0.09em',
+  textTransform: 'uppercase',
+  marginBottom: '4px',
+  fontWeight: '600',
+};
+
+const statValue = {
+  fontFamily: 'var(--font-display)',
+  fontSize: '20px',
+  fontWeight: '300',
+};
+
+const stackedSection = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '10px',
+  marginBottom: '26px',
+};
+
+const sectionBlock = {
+  marginBottom: '30px',
+};
+
+const sectionHeader = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  gap: '12px',
+  marginBottom: '14px',
+};
+
+const sectionLabel = {
+  fontSize: '10px',
+  fontWeight: '600',
+  letterSpacing: '0.11em',
+  textTransform: 'uppercase',
+  color: 'var(--text-muted)',
+};
+
+const infoCard = {
+  background: 'var(--bg-elevated)',
+  border: '1px solid var(--border-subtle)',
+  borderLeft: '2px solid var(--accent-primary)',
+  borderRadius: '18px',
+  padding: '14px 16px',
+};
+
+const infoLabel = {
+  fontSize: '9px',
+  textTransform: 'uppercase',
+  letterSpacing: '0.09em',
+  color: 'var(--text-muted)',
+  marginBottom: '6px',
+  fontWeight: '600',
+};
+
+const infoContent = {
+  fontSize: '13px',
+  color: 'var(--text-secondary)',
+  lineHeight: 1.7,
+};
+
+const notesText = {
+  fontFamily: 'var(--font-body)',
+  fontSize: '13px',
+  whiteSpace: 'pre-wrap',
+  margin: 0,
+  lineHeight: 1.7,
+  color: 'var(--text-secondary)',
+};
+
+const cardList = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '8px',
+};
+
+const destinationCard = {
+  background: 'var(--bg-elevated)',
+  border: '1px solid var(--border-subtle)',
+  borderLeft: '3px solid var(--accent-primary)',
+  borderRadius: '18px',
+  padding: '14px 16px',
+};
+
+const destinationHeader = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'flex-start',
+  gap: '10px',
+};
+
+const destinationTitleRow = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '8px',
+  marginBottom: '4px',
+  flexWrap: 'wrap',
+};
+
+const destinationTitle = {
+  fontFamily: 'var(--font-display)',
+  fontSize: '18px',
+};
+
+const nightBadge = {
+  fontSize: '9px',
+  color: 'var(--accent-primary)',
+  background: 'var(--accent-subtle)',
+  border: '1px solid var(--accent-border)',
+  borderRadius: '999px',
+  padding: '2px 7px',
+};
+
+const destinationLocation = {
+  fontSize: '11px',
+  color: 'var(--text-secondary)',
+};
+
+const destinationDates = {
+  fontSize: '11px',
+  color: 'var(--accent-primary)',
+  fontFamily: 'var(--font-mono)',
+  flexShrink: 0,
+  textAlign: 'right',
+};
+
+const mutedText = {
+  fontSize: '12px',
+  color: 'var(--text-muted)',
+  marginTop: '8px',
+  lineHeight: 1.65,
+  marginBottom: 0,
+};
+
+const timelineWrap = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '18px',
+};
+
+const dateLabelRow = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px',
+  marginBottom: '8px',
+};
+
+const dateMark = {
+  width: '2.5px',
+  height: '16px',
+  background: 'var(--accent-primary)',
+  borderRadius: '2px',
+};
+
+const dateLabel = {
+  fontSize: '10px',
+  fontWeight: '500',
+  letterSpacing: '0.09em',
+  textTransform: 'uppercase',
+  color: 'var(--text-muted)',
+};
+
+const checkForm = {
+  display: 'flex',
+  gap: '8px',
+  marginBottom: '14px',
+};
+
+const miniNote = {
+  fontSize: '10px',
+  color: 'var(--text-muted)',
+  marginTop: '5px',
+};
+
+const checklistWrap = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '5px',
+};
+
+const checkItemCard = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px',
+  padding: '9px 13px',
+  border: '1px solid',
+  borderRadius: '16px',
+  transition: 'all var(--transition-fast)',
+};
+
+const checkBox = {
+  width: '17px',
+  height: '17px',
+  borderRadius: '4px',
+  flexShrink: 0,
+  border: '2px solid',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transition: 'all var(--transition-fast)',
+};
+
+const checkMark = {
+  color: '#0c0c12',
+  fontSize: '10px',
+  fontWeight: '700',
+  lineHeight: 1,
+};
+
+const checkText = {
+  flex: 1,
+  fontSize: '13px',
+};
+
+const deleteIconBtn = {
+  background: 'none',
+  border: 'none',
+  cursor: 'pointer',
+  color: 'var(--text-faint, var(--text-muted))',
+  fontSize: '13px',
+  padding: '2px 4px',
+};
+
+const budgetRow = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  marginBottom: '6px',
+  fontSize: '11px',
+  color: 'var(--text-muted)',
+};
+
+const expenseList = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '6px',
+};
+
+const expenseCard = {
+  background: 'var(--bg-elevated)',
+  border: '1px solid var(--border-subtle)',
+  borderRadius: '16px',
+  padding: '10px 14px',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+};
+
+const expenseLeft = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px',
+};
+
+const expenseIcon = {
+  fontSize: '16px',
+};
+
+const expenseName = {
+  fontSize: '13px',
+  fontWeight: '500',
+};
+
+const expenseDate = {
+  fontSize: '10px',
+  color: 'var(--text-muted)',
+};
+
+const expenseAmount = {
+  fontFamily: 'var(--font-mono)',
+  fontSize: '13px',
+  color: 'var(--text-primary)',
+};
+
+const footerCta = {
+  marginTop: '56px',
+  paddingTop: '32px',
+  borderTop: '1px solid var(--border-subtle)',
+  textAlign: 'center',
+};
+
+const footerText = {
+  color: 'var(--text-muted)',
+  fontSize: '12px',
+  marginBottom: '14px',
+};
+
+const loadingWrap = {
+  minHeight: '100vh',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+};
+
+const loadingCard = {
+  fontFamily: 'var(--font-display)',
+  fontSize: '28px',
+  fontWeight: '300',
+  color: 'var(--accent-primary)',
+};
+
+const errorWrap = {
+  minHeight: '100vh',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexDirection: 'column',
+  gap: '20px',
+  padding: '24px',
+};
+
+const errorTitle = {
+  fontFamily: 'var(--font-display)',
+  fontSize: '28px',
+  fontWeight: '300',
+  color: 'var(--text-secondary)',
+  textAlign: 'center',
+  margin: 0,
+};
+
 const ctaBtn = {
   background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-glow))',
-  border: 'none', borderRadius: 'var(--radius-md)', padding: '10px 24px',
-  color: '#0c0c12', fontWeight: '600', fontSize: '12px', cursor: 'pointer',
-  letterSpacing: '0.05em', textTransform: 'uppercase',
+  border: 'none',
+  borderRadius: 'var(--radius-md)',
+  padding: '10px 24px',
+  color: '#0c0c12',
+  fontWeight: '600',
+  fontSize: '12px',
+  cursor: 'pointer',
+  letterSpacing: '0.05em',
+  textTransform: 'uppercase',
 };
+
 const actionBtn = {
-  background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer',
-  color: 'var(--text-secondary)', fontSize: '10px', padding: '4px 9px',
-  borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-body)',
-  transition: 'all var(--transition-fast)', letterSpacing: '0.03em',
+  background: 'none',
+  border: '1px solid var(--border-subtle)',
+  cursor: 'pointer',
+  color: 'var(--text-secondary)',
+  fontSize: '10px',
+  padding: '4px 9px',
+  borderRadius: 'var(--radius-sm)',
+  fontFamily: 'var(--font-body)',
+  transition: 'all var(--transition-fast)',
+  letterSpacing: '0.03em',
 };
 
 export default SharedTripPage;
