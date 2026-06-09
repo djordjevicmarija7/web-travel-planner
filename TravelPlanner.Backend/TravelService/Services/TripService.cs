@@ -1,4 +1,5 @@
 ﻿using Common.DTOs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -6,6 +7,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using TravelService.Data;
+using TravelService.Hubs;
 using TravelService.Models;
 
 namespace TravelService.Services
@@ -15,11 +17,15 @@ namespace TravelService.Services
         private readonly AppDbContext _context;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
-        public TripService(AppDbContext context, IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        private readonly IHubContext<TripHub> _hubContext;
+
+        public TripService(AppDbContext context, IHttpClientFactory httpClientFactory,
+            IConfiguration configuration, IHubContext<TripHub> hubContext)
         {
             _context = context;
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
+            _hubContext = hubContext;
         }
 
         public async Task<TripDto> CreateAsync(CreateTripDto dto, int userId)
@@ -44,6 +50,7 @@ namespace TravelService.Services
             };
             _context.Trips.Add(trip);
             await _context.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("TripCreated", MapToDto(trip));
             return MapToDto(trip);
         }
 
@@ -66,7 +73,7 @@ namespace TravelService.Services
             var req2 = new HttpRequestMessage(HttpMethod.Delete, $"http://localhost:5004/api/trips/{id}/all");
             req2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
             await client.SendAsync(req2);
-
+            await _hubContext.Clients.All.SendAsync("TripDeleted", id);
             return true;
         }
 
@@ -112,7 +119,9 @@ namespace TravelService.Services
             trip.Notes = dto.Notes;
 
             await _context.SaveChangesAsync();
-            return MapToDto(trip);
+            var returnDto = MapToDto(trip);
+            await _hubContext.Clients.All.SendAsync("TripUpdated", returnDto);
+            return returnDto;
         }
 
         private static TripDto MapToDto(Trip trip)

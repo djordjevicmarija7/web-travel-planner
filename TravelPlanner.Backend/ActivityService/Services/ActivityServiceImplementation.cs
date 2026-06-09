@@ -1,7 +1,9 @@
 ﻿using ActivityService.Clients;
 using ActivityService.Data;
+using ActivityService.Hubs;
 using ActivityService.Models;
 using Common.DTOs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace ActivityService.Services
@@ -11,11 +13,12 @@ namespace ActivityService.Services
 
             private readonly AppDbContext _context;
             private readonly TripApiClient _tripApiClient;
-
-            public ActivityServiceImplementation(AppDbContext context, TripApiClient tripApiClient)
+            private readonly IHubContext<ActivityHub> _hubContext;
+        public ActivityServiceImplementation(AppDbContext context, TripApiClient tripApiClient, IHubContext<ActivityHub> hubContext)
             {
                 _context = context;
                 _tripApiClient = tripApiClient;
+                _hubContext = hubContext;
             }
 
             public async Task<ActivityDto?> CreateAsync(int tripId, CreateActivityDto dto)
@@ -50,8 +53,8 @@ namespace ActivityService.Services
 
                 _context.Activities.Add(activity);
                 await _context.SaveChangesAsync();
-
-                return MapToDto(activity);
+            await _hubContext.Clients.All.SendAsync("ActivityCreated", MapToDto(activity));
+            return MapToDto(activity);
             }
 
             public async Task<bool> DeleteAsync(int id, int tripId)
@@ -64,6 +67,7 @@ namespace ActivityService.Services
             }
             _context.Activities.Remove(activity);
             await _context.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("ActivityDeleted", id);
             return true;
         }
 
@@ -119,6 +123,7 @@ namespace ActivityService.Services
             activity.EstimatedCost = dto.EstimatedCost;
 
             await _context.SaveChangesAsync();
+            await _hubContext.Clients.All.SendAsync("ActivityUpdated", MapToDto(activity));
             return MapToDto(activity);
         }
         private static ActivityDto MapToDto(Activity activity)

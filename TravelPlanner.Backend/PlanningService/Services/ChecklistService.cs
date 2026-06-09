@@ -1,9 +1,11 @@
 ﻿using Common.DTOs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.ServiceFabric.Data;
 using Microsoft.ServiceFabric.Data.Collections;
 using PlanningService.Data;
 using PlanningService.Helpers;
+using PlanningService.Hubs;
 using PlanningService.Models;
 
 namespace PlanningService.Services
@@ -15,10 +17,14 @@ namespace PlanningService.Services
 
         private const string DictName = "checklistState";
 
-        public ChecklistService(AppDbContext context, IReliableStateManager stateManager)
+        private readonly IHubContext<PlanningHub> _hubContext;
+
+        public ChecklistService(AppDbContext context, IReliableStateManager stateManager,
+            IHubContext<PlanningHub> hubContext)
         {
             _context = context;
             _stateManager = stateManager;
+            _hubContext = hubContext;
         }
 
         public async Task<ChecklistItemDto> CreateAsync(int tripId, CreateChecklistItemDto dto)
@@ -40,7 +46,7 @@ namespace PlanningService.Services
             using var tx = _stateManager.CreateTransaction();
             await dict.SetAsync(tx, item.Id, false);
             await tx.CommitAsync();
-
+            await _hubContext.Clients.All.SendAsync("ChecklistItemCreated", ChecklistItemMapper.MapToDto(item));
             return ChecklistItemMapper.MapToDto(item);
         }
 
@@ -63,6 +69,7 @@ namespace PlanningService.Services
             using var tx = _stateManager.CreateTransaction();
             await dict.TryRemoveAsync(tx, id);
             await tx.CommitAsync();
+            await _hubContext.Clients.All.SendAsync("ChecklistItemDeleted", id);
             return true;
         }
 
@@ -101,6 +108,7 @@ namespace PlanningService.Services
             using var tx = _stateManager.CreateTransaction();
             await dict.SetAsync(tx, item.Id, dto.IsCompleted);
             await tx.CommitAsync();
+            await _hubContext.Clients.All.SendAsync("ChecklistItemToggled", ChecklistItemMapper.MapToDto(item));
             return ChecklistItemMapper.MapToDto(item);
         }
         public async Task DeleteAllByTripAsync(int tripId)

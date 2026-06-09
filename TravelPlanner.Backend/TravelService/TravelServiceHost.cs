@@ -9,6 +9,7 @@ using System.Text;
 using TravelService.Clients;
 using TravelService.Data;
 using TravelService.Services;
+using TravelService.Hubs;
 
 namespace TravelService
 {
@@ -66,13 +67,15 @@ namespace TravelService
 
                         builder.Services.AddAuthorization();
                         builder.Services.AddControllers();
+                        builder.Services.AddSignalR();
                         builder.Services.AddCors(options =>
                         {
                             options.AddPolicy("AllowFrontend", policy =>
                             {
                                 policy.WithOrigins("http://localhost:5173")
                                       .AllowAnyHeader()
-                                      .AllowAnyMethod();
+                                      .AllowAnyMethod()
+                                      .AllowCredentials();
                             });
                         });
                         builder.Services.AddEndpointsApiExplorer();
@@ -90,6 +93,8 @@ namespace TravelService
                         app.UseAuthentication();
                         app.UseAuthorization();
                         app.MapControllers();
+                        app.MapHub<TripHub>("/hubs/trips");
+                        app.MapHub<DestinationHub>("/hubs/destinations");
                         return app;
                     }))
             };

@@ -5,6 +5,8 @@ using Microsoft.ServiceFabric.Data;
 using PlanningService.Data;
 using PlanningService.Services;
 using System.Text;
+using PlanningService.Hubs;
+
 namespace PlanningService
 {
     public class Startup
@@ -43,6 +45,7 @@ namespace PlanningService
                 });
             services.AddAuthorization();
             services.AddControllers();
+            services.AddSignalR();
 
             services.AddCors(options =>
             {
@@ -50,7 +53,8 @@ namespace PlanningService
                 {
                     policy.WithOrigins("http://localhost:5173")
                     .AllowAnyHeader()
-                    .AllowAnyMethod();
+                    .AllowAnyMethod()
+                    .AllowCredentials();
                 });
             });
             services.AddEndpointsApiExplorer();
@@ -67,6 +71,7 @@ namespace PlanningService
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
+            app.MapHub<PlanningHub>("/hubs/planning");
         }
     }
 }

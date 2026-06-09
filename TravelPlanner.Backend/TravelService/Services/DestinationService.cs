@@ -1,6 +1,8 @@
 ﻿using Common.DTOs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using TravelService.Data;
+using TravelService.Hubs;
 using TravelService.Models;
 
 namespace TravelService.Services
@@ -8,10 +10,12 @@ namespace TravelService.Services
     public class DestinationService : IDestinationService
     {
         private readonly AppDbContext _context;
+        private readonly IHubContext<DestinationHub> _hubContext;
 
-        public DestinationService(AppDbContext context)
+        public DestinationService(AppDbContext context, IHubContext<DestinationHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         public async Task<DestinationDto> CreateAsync(int tripId, CreateDestinationDto dto, int userId)
@@ -46,7 +50,7 @@ namespace TravelService.Services
 
             _context.Destinations.Add(destination);
             await _context.SaveChangesAsync();
-
+            await _hubContext.Clients.All.SendAsync("DestinationCreated", MapToDto(destination));
             return MapToDto(destination);
 
         }
@@ -67,7 +71,7 @@ namespace TravelService.Services
             }
             _context.Destinations.Remove(destination);
             await _context.SaveChangesAsync();
-
+            await _hubContext.Clients.All.SendAsync("DestinationDeleted", id);
             return true;
         }
 
@@ -131,7 +135,7 @@ namespace TravelService.Services
             destination.Notes = dto.Notes;
 
             await _context.SaveChangesAsync();
-
+            await _hubContext.Clients.All.SendAsync("DestinationUpdated", MapToDto(destination));
             return MapToDto(destination);
         }
         private static DestinationDto MapToDto(Destination d)

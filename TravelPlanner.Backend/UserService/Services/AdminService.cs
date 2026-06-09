@@ -1,5 +1,6 @@
 ﻿using Common.DTOs;
 using Common.Enums;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -7,6 +8,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using UserService.Data;
+using UserService.Hubs;
 using UserService.Models;
 
 namespace UserService.Services
@@ -17,11 +19,15 @@ namespace UserService.Services
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
 
-        public AdminService(AppDbContext context, IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        private readonly IHubContext<UserHub> _hubContext;
+
+        public AdminService(AppDbContext context, IHttpClientFactory httpClientFactory,
+            IConfiguration configuration, IHubContext<UserHub> hubContext)
         {
             _context = context;
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
+            _hubContext = hubContext;
         }
 
         public async Task<bool> DeleteUserAsync(int id)
@@ -38,7 +44,7 @@ namespace UserService.Services
             var req = new HttpRequestMessage(HttpMethod.Delete, $"http://localhost:5002/api/trips/user/{id}/all");
             req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
             await client.SendAsync(req);
-
+            await _hubContext.Clients.All.SendAsync("UserDeleted", id);
             return true;
         }
 
@@ -68,7 +74,9 @@ namespace UserService.Services
             }
             user.Role = dto.Role;
             await _context.SaveChangesAsync();
-            return MapToDto(user);
+            var result = MapToDto(user);
+            await _hubContext.Clients.All.SendAsync("UserRoleUpdated", result);
+            return result;
         }
 
         private string GenerateInternalToken(int userId)

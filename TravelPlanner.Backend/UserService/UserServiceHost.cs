@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using UserService.Data;
 using UserService.Services;
+using UserService.Hubs;
 
 namespace UserService
 {
@@ -61,6 +62,7 @@ namespace UserService
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+                        builder.Services.AddSignalR();
                         builder.Services.AddHttpClient();
                         builder.Services.AddCors(options =>
                         {
@@ -68,7 +70,8 @@ namespace UserService
                             {
                                 policy.WithOrigins("http://localhost:5173")
                                       .AllowAnyHeader()
-                                      .AllowAnyMethod();
+                                      .AllowAnyMethod()
+                                      .AllowCredentials();
                             });
                         });
                         builder.Services.AddEndpointsApiExplorer();
@@ -86,6 +89,7 @@ namespace UserService
                         app.UseAuthentication();
                         app.UseAuthorization();
                         app.MapControllers();
+                        app.MapHub<UserHub>("/hubs/users");
                         return app;
                     }))
             };

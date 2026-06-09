@@ -1,9 +1,11 @@
 ﻿using Common.DTOs;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.ServiceFabric.Data;
 using Microsoft.ServiceFabric.Data.Collections;
 using PlanningService.Data;
 using PlanningService.Helpers;
+using PlanningService.Hubs;
 using PlanningService.Models;
 
 namespace PlanningService.Services
@@ -13,11 +15,14 @@ namespace PlanningService.Services
         private readonly AppDbContext _context;
         private readonly IReliableStateManager _stateManager;
         private const string TotalCacheName = "expenseTotals";
+        private readonly IHubContext<PlanningHub> _hubContext;
 
-        public ExpenseService(AppDbContext context, IReliableStateManager stateManager)
+        public ExpenseService(AppDbContext context, IReliableStateManager stateManager,
+            IHubContext<PlanningHub> hubContext)
         {
             _context = context;
             _stateManager = stateManager;
+            _hubContext = hubContext;
         }
 
         public async Task<ExpenseDto> CreateAsync(int tripId, CreateExpenseDto dto)
@@ -35,6 +40,7 @@ namespace PlanningService.Services
             await _context.SaveChangesAsync();
 
             await IncrementTotalAsync(tripId, dto.Amount);
+            await _hubContext.Clients.All.SendAsync("ExpenseCreated", ExpenseMapper.MapToDto(expense));
             return ExpenseMapper.MapToDto(expense);
         }
 
@@ -53,7 +59,7 @@ namespace PlanningService.Services
             await _context.SaveChangesAsync();
 
             await DecrementTotalAsync(tripId, amount);
-
+            await _hubContext.Clients.All.SendAsync("ExpenseDeleted", id);
             return true;
         }
 

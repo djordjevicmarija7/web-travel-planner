@@ -9,6 +9,7 @@ using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
 using System.Fabric;
 using System.Text;
+using ActivityService.Hubs;
 
 namespace ActivityService
 {
@@ -60,13 +61,15 @@ namespace ActivityService
 
                         builder.Services.AddAuthorization();
                         builder.Services.AddControllers();
+                        builder.Services.AddSignalR();
                         builder.Services.AddCors(options =>
                         {
                             options.AddPolicy("AllowFrontend", policy =>
                             {
                                 policy.WithOrigins("http://localhost:5173")
                                       .AllowAnyHeader()
-                                      .AllowAnyMethod();
+                                      .AllowAnyMethod()
+                                      .AllowCredentials();
                             });
                         });
                         builder.Services.AddEndpointsApiExplorer();
@@ -84,6 +87,7 @@ namespace ActivityService
                         app.UseAuthentication();
                         app.UseAuthorization();
                         app.MapControllers();
+                        app.MapHub<ActivityHub>("/hubs/activities");
                         return app;
                     }))
             };
