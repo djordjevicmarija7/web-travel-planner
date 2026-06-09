@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import expenseService from '../../services/expenseService';
 import { Button, Input, Textarea, Select, FormRow, Modal, EmptyState, ProgressBar } from '../ui';
-import {ExpenseCategory} from '../../enums/expense/ExpenseCategory'
+import { ExpenseCategory } from '../../enums/expense/ExpenseCategory';
 import ConfirmDialog from '../common/ConfirmDialog';
-
+import { formatDate } from '../../utils/formatDate';
 
 const CATEGORIES = [
   { value: ExpenseCategory.transport,      label: 'Transport',      icon: '✈' },
@@ -21,7 +21,7 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
   const [errors, setErrors]     = useState({});
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading]   = useState(false);
- const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
 
   const totalSpent = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
   const remaining  = budget != null ? budget - totalSpent : null;
@@ -171,7 +171,7 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
                   <div>
                     <div style={{ fontWeight: '500', fontSize: '14px' }}>{expense.name}</div>
                     <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      {cat?.label || expense.category} · {expense.date?.slice(0, 10)}
+                      {cat?.label || expense.category} · {formatDate(expense.date)}
                     </div>
                     {expense.description && (
                       <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
@@ -221,7 +221,7 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
           </div>
         </form>
       </Modal>
-            <ConfirmDialog
+      <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title="Delete Expense"
         message="Are you sure you want to delete this expense? This action cannot be undone."

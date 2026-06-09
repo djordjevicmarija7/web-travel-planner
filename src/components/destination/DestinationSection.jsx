@@ -2,6 +2,7 @@ import { useState } from 'react';
 import destinationService from '../../services/destinationService';
 import { Button, Input, Textarea, FormRow, Modal, EmptyState } from '../ui';
 import ConfirmDialog from '../common/ConfirmDialog';
+import { formatDate } from '../../utils/formatDate';
 
 const emptyForm = {
   name: '',
@@ -89,7 +90,7 @@ function DestinationForm({ initialData, onSubmit, onCancel, loading, tripStartDa
             color: 'var(--accent-dim)',
           }}
         >
-          Trip runs {tripStartDate} → {tripEndDate}. Destination dates must stay within this range.
+          Trip runs {formatDate(tripStartDate)} → {formatDate(tripEndDate)}. Destination dates must stay within this range.
         </div>
       )}
 
@@ -234,7 +235,7 @@ function DestinationCard({ dest, onEdit, onDelete }) {
               marginBottom: dest.description || dest.notes ? '8px' : '0',
             }}
           >
-            {dest.arrivalDate?.slice(0, 10)} → {dest.departureDate?.slice(0, 10)}
+            {formatDate(dest.arrivalDate)} → {formatDate(dest.departureDate)}
           </div>
 
           {dest.description && (

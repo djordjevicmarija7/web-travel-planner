@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button, Input, Textarea, Select, FormRow } from '../ui';
 import { ActivityStatus } from '../../enums/activity/ActivityStatus';
+import { formatDate } from '../../utils/formatDate';
 
 const STATUS_OPTIONS = [
   { value: ActivityStatus.planned,   label: 'Planned' },
@@ -76,7 +77,7 @@ function ActivityForm({ initialData, onSubmit, onCancel, loading, tripStartDate,
             color: 'var(--accent-dim)',
           }}
         >
-          Trip runs {tripStartDate} → {tripEndDate}. Activity date must stay within this range.
+          Trip runs {formatDate(tripStartDate)} → {formatDate(tripEndDate)}. Activity date must stay within this range.
         </div>
       )}
 

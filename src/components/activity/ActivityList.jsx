@@ -4,11 +4,12 @@ import ActivityForm from './ActivityForm';
 import { Badge, EmptyState, Modal } from '../ui';
 import { ActivityStatus } from '../../enums/activity/ActivityStatus';
 import ConfirmDialog from '../common/ConfirmDialog';
+import { formatDateLong } from '../../utils/formatDate';
 
 const STATUS_LABELS = { planned: 'Planned', reserved: 'Reserved', completed: 'Completed', cancelled: 'Cancelled' };
 const STATUS_COLORS = { planned: 'var(--status-planned)', reserved: 'var(--status-reserved)', completed: 'var(--status-completed)', cancelled: 'var(--status-cancelled)' };
-const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAY_NAMES = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const MONTH_NAMES = ['Januar','Februar','Mart','April','Maj','Jun','Jul','Avgust','Septembar','Oktobar','Novembar','Decembar'];
+const DAY_NAMES = ['Pon','Uto','Sre','Čet','Pet','Sub','Ned'];
 
 function getDaysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
 function getFirstDayOfMonth(y, m) { const d = new Date(y, m, 1).getDay(); return d === 0 ? 6 : d - 1; }
@@ -48,7 +49,7 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
   const tripStart = tripStartDate ? toYMD(tripStartDate) : null;
   const tripEnd   = tripEndDate   ? toYMD(tripEndDate)   : null;
 
-    function handleDelete(id) {
+  function handleDelete(id) {
     setConfirmDialog({ isOpen: true, id });
   }
  
@@ -116,7 +117,7 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
                   <div style={{ width: '3px', height: '18px', background: 'var(--accent-primary)', borderRadius: '2px' }} />
                   <span style={{ fontSize: '11px', fontWeight: '500', letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-                    {new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    {formatDateLong(date)}
                   </span>
                   {destsOnDay.map(dest => (
                     <span key={dest.id} style={{ fontSize: '10px', color: 'var(--accent-primary)', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', borderRadius: '10px', padding: '2px 9px', letterSpacing: '0.04em' }}>
@@ -190,7 +191,6 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
                   position: 'relative',
                   opacity: !inTrip && tripStart && tripEnd ? 0.55 : 1,
                 }}>
-                  {/* Trip start/end labels */}
                   {(isTripStart || isTripEnd) && (
                     <div style={{ position: 'absolute', top: '-1px', right: '-1px', fontSize: '8px', background: 'var(--accent-primary)', color: '#0c0c12', borderRadius: '0 var(--radius-md) 0 var(--radius-sm)', padding: '1px 5px', fontWeight: '600', letterSpacing: '0.04em', zIndex: 1 }}>
                       {isTripStart ? 'START' : 'END'}
@@ -199,7 +199,6 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
 
                   <div style={{ fontSize: '12px', fontWeight: isToday ? '600' : '400', color: isToday ? 'var(--status-planned)' : inTrip ? 'var(--text-primary)' : 'var(--text-muted)', marginBottom: '4px' }}>{day}</div>
 
-                  {/* Destination chip */}
                   {hasDestination && destsOnDay.slice(0, 1).map(dest => (
                     <div key={dest.id} style={{ fontSize: '9px', color: 'var(--accent-primary)', background: 'rgba(201,168,76,0.2)', borderRadius: '3px', padding: '1px 4px', marginBottom: '2px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', fontWeight: '500' }}>
                       📍 {dest.name}
@@ -209,7 +208,6 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
                     <div style={{ fontSize: '9px', color: 'var(--accent-dim)' }}>+{destsOnDay.length - 1} dest.</div>
                   )}
 
-                  {/* Activity chips */}
                   {dayActs.slice(0, hasDestination ? 1 : 2).map((act) => (
                     <div key={act.id} title={act.name} style={{ fontSize: '10px', color: '#fff', background: STATUS_COLORS[act.status] || 'var(--text-muted)', borderRadius: '3px', padding: '1px 5px', marginBottom: '2px', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', opacity: 0.9 }}>
                       {act.time ? `${act.time.slice(0,5)} ` : ''}{act.name}
@@ -227,10 +225,9 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
           {selectedDay && (
             <div style={{ marginTop: '20px', background: 'var(--bg-elevated)', border: '1px solid var(--accent-border)', borderRadius: 'var(--radius-lg)', padding: '18px', animation: 'fadeIn 0.2s ease' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: '300', marginBottom: '10px', color: 'var(--accent-primary)' }}>
-                {selectedDay} {MONTH_NAMES[calMonth]} {calYear}
+                {selectedDay}. {MONTH_NAMES[calMonth]} {calYear}.
               </div>
 
-              {/* Destinations on this day */}
               {selectedDestinations.length > 0 && (
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
                   {selectedDestinations.map(dest => (
@@ -283,7 +280,7 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
           />
         )}
       </Modal>
-            <ConfirmDialog
+      <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title="Delete Activity"
         message="Are you sure you want to delete this activity? This action cannot be undone."

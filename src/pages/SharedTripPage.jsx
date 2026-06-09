@@ -6,6 +6,7 @@ import { Badge, Button, Input, Textarea, Select, FormRow, EmptyState, Modal, Pro
 import ActivityForm from '../components/activity/ActivityForm';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import { generateTripPdf } from '../utils/generateTripPdf';
+import { formatDate, formatDateLong } from '../utils/formatDate';
 
 const STATUS_LABELS = {
   planned: 'Planned', reserved: 'Reserved',
@@ -65,7 +66,7 @@ function DestinationForm({ initialData, onSubmit, onCancel, loading, tripStartDa
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       {tripStartDate && tripEndDate && (
         <div style={{ padding: '9px 13px', borderRadius: 'var(--radius-sm)', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', fontSize: '11px', color: 'var(--accent-dim)' }}>
-          Trip runs {tripStartDate} → {tripEndDate}
+          Trip runs {formatDate(tripStartDate)} → {formatDate(tripEndDate)}
         </div>
       )}
       <Input label="Destination Name *" name="name" value={form.name} onChange={handleChange} placeholder="e.g. Athens" error={errors.name} />
@@ -218,7 +219,6 @@ function SharedTripPage() {
   const [expenses, setExpenses] = useState([]);
   const [destinations, setDestinations] = useState([]);
 
-  
   const [activityModal, setActivityModal] = useState(false);
   const [activityLoading, setActivityLoading] = useState(false);
   const [editActivityTarget, setEditActivityTarget] = useState(null);
@@ -258,7 +258,6 @@ function SharedTripPage() {
     }
   }
 
-  
   async function handleAddActivity(formData) {
     try {
       setActivityLoading(true);
@@ -300,7 +299,6 @@ function SharedTripPage() {
     } catch { alert('Error deleting item.'); }
   }
 
-  
   async function handleAddCheckItem(e) {
     e.preventDefault();
     if (!newCheckItem.trim()) return;
@@ -327,7 +325,6 @@ function SharedTripPage() {
     } catch { alert('Error deleting item.'); }
   }
 
-  
   async function handleSubmitDestination(formData) {
     try {
       setDestLoading(true);
@@ -344,7 +341,6 @@ function SharedTripPage() {
     finally { setDestLoading(false); }
   }
 
-
   async function handleAddExpense(formData) {
     try {
       setExpenseLoading(true);
@@ -355,7 +351,6 @@ function SharedTripPage() {
     finally { setExpenseLoading(false); }
   }
 
-  
   async function handleUpdateTrip(formData) {
     try {
       setTripEditLoading(true);
@@ -366,7 +361,6 @@ function SharedTripPage() {
     finally { setTripEditLoading(false); }
   }
 
-  
   function handleDownloadPdf() {
     if (!trip) return;
     setPdfLoading(true);
@@ -374,7 +368,6 @@ function SharedTripPage() {
     finally { setPdfLoading(false); }
   }
 
-  
   if (loading) {
     return (
       <div style={loadingWrap}>
@@ -442,7 +435,7 @@ function SharedTripPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
             <div>
               <h1 style={heroTitle}>{trip.name}</h1>
-              <p style={heroMeta}>{tripStartDate} — {tripEndDate}</p>
+              <p style={heroMeta}>{formatDate(tripStartDate)} — {formatDate(tripEndDate)}</p>
             </div>
             {isEdit && (
               <Button size="sm" variant="secondary" onClick={() => setTripEditModal(true)}>
@@ -506,7 +499,7 @@ function SharedTripPage() {
                         </div>
                         {dest.location && <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>📍 {dest.location}</div>}
                         <div style={{ fontSize: '11px', color: 'var(--accent-primary)', fontFamily: 'var(--font-mono)', marginTop: '2px' }}>
-                          {dest.arrivalDate?.slice(0, 10)} → {dest.departureDate?.slice(0, 10)}
+                          {formatDate(dest.arrivalDate)} → {formatDate(dest.departureDate)}
                         </div>
                         {dest.description && <p style={mutedText}>{dest.description}</p>}
                         {dest.notes && <p style={{ ...mutedText, fontStyle: 'italic' }}>💬 {dest.notes}</p>}
@@ -541,7 +534,7 @@ function SharedTripPage() {
                   <div style={dateLabelRow}>
                     <div style={dateMark} />
                     <span style={dateLabel}>
-                      {new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                      {formatDateLong(date)}
                     </span>
                   </div>
                   <div style={cardList}>
@@ -626,7 +619,7 @@ function SharedTripPage() {
                     <span style={expenseIcon}>{CATEGORY_ICONS[expense.category] || '📌'}</span>
                     <div>
                       <div style={expenseName}>{expense.name}</div>
-                      <div style={expenseDate}>{CATEGORY_LABELS[expense.category] || expense.category} · {expense.date?.slice(0, 10)}</div>
+                      <div style={expenseDate}>{CATEGORY_LABELS[expense.category] || expense.category} · {formatDate(expense.date)}</div>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
