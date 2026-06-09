@@ -44,27 +44,26 @@ function TripDetailPage() {
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false });
 
   useEffect(() => { fetchAll(); }, [id]);
-// Trips hub
+
 useSignalR('http://localhost:5002/hubs/trips', {
   TripUpdated: (updated) => { if (updated.id === Number(id)) setTrip(updated); },
   TripDeleted: (deletedId) => { if (deletedId === Number(id)) navigate('/dashboard'); },
 }, [id]);
 
-// Destinations hub
+
 useSignalR('http://localhost:5002/hubs/destinations', {
   DestinationCreated: (d) => { if (d.tripId === Number(id)) setDestinations(prev => prev.find(x => x.id === d.id) ? prev : [...prev, d]); },
   DestinationUpdated: (d) => { if (d.tripId === Number(id)) setDestinations(prev => prev.map(x => x.id === d.id ? d : x)); },
   DestinationDeleted: (did) => setDestinations(prev => prev.filter(x => x.id !== did)),
 }, [id]);
 
-// Activities hub
+
 useSignalR('http://localhost:5003/hubs/activities', {
   ActivityCreated: (a) => { if (a.tripId === Number(id)) setActivities(prev => prev.find(x => x.id === a.id) ? prev : [...prev, a]); },
   ActivityUpdated: (a) => { if (a.tripId === Number(id)) setActivities(prev => prev.map(x => x.id === a.id ? a : x)); },
   ActivityDeleted: (aid) => setActivities(prev => prev.filter(x => x.id !== aid)),
 }, [id]);
 
-// Planning hub
 useSignalR('http://localhost:5004/hubs/planning', {
   ChecklistItemCreated: (item) => { if (item.tripId === Number(id)) setChecklist(prev => prev.find(x => x.id === item.id) ? prev : [...prev, item]); },
   ChecklistItemToggled: (item) => { if (item.tripId === Number(id)) setChecklist(prev => prev.map(x => x.id === item.id ? item : x)); },

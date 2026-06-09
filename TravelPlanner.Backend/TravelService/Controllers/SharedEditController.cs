@@ -19,6 +19,7 @@ namespace TravelService.Controllers
         private readonly IHttpClientFactory _http;
         private readonly IConfiguration _config;
 
+        private const string TravelBase   = "http://localhost:5002";
         private const string ActivityBase = "http://localhost:5003";
         private const string PlanningBase = "http://localhost:5004";
 
@@ -32,6 +33,7 @@ namespace TravelService.Controllers
             _config = config;
         }
 
+        // ── Activities ────────────────────────────────────────────────────────
         [HttpPost("activities")]
         public Task<IActionResult> CreateActivity(string token, [FromBody] JsonElement body)
             => Proxy(token, HttpMethod.Post,
@@ -50,7 +52,7 @@ namespace TravelService.Controllers
                 tripId => $"{ActivityBase}/api/trips/{tripId}/activities/{activityId}",
                 null);
 
-    
+        // ── Checklist ─────────────────────────────────────────────────────────
         [HttpPost("checklist")]
         public Task<IActionResult> CreateChecklistItem(string token, [FromBody] JsonElement body)
             => Proxy(token, HttpMethod.Post,
@@ -69,13 +71,52 @@ namespace TravelService.Controllers
                 tripId => $"{PlanningBase}/api/trips/{tripId}/checklist/{itemId}",
                 null);
 
+        // ── Destinations ──────────────────────────────────────────────────────
+        [HttpPost("destinations")]
+        public Task<IActionResult> CreateDestination(string token, [FromBody] JsonElement body)
+            => Proxy(token, HttpMethod.Post,
+                tripId => $"{TravelBase}/api/trips/{tripId}/destinations",
+                body);
+
+        [HttpPut("destinations/{destId:int}")]
+        public Task<IActionResult> UpdateDestination(string token, int destId, [FromBody] JsonElement body)
+            => Proxy(token, HttpMethod.Put,
+                tripId => $"{TravelBase}/api/trips/{tripId}/destinations/{destId}",
+                body);
+
+        [HttpDelete("destinations/{destId:int}")]
+        public Task<IActionResult> DeleteDestination(string token, int destId)
+            => Proxy(token, HttpMethod.Delete,
+                tripId => $"{TravelBase}/api/trips/{tripId}/destinations/{destId}",
+                null);
+
+        // ── Expenses ──────────────────────────────────────────────────────────
+        [HttpPost("expenses")]
+        public Task<IActionResult> CreateExpense(string token, [FromBody] JsonElement body)
+            => Proxy(token, HttpMethod.Post,
+                tripId => $"{PlanningBase}/api/trips/{tripId}/expenses",
+                body);
+
+        [HttpDelete("expenses/{expenseId:int}")]
+        public Task<IActionResult> DeleteExpense(string token, int expenseId)
+            => Proxy(token, HttpMethod.Delete,
+                tripId => $"{PlanningBase}/api/trips/{tripId}/expenses/{expenseId}",
+                null);
+
+        // ── Trip (basic info) ─────────────────────────────────────────────────
+        [HttpPut("trip")]
+        public Task<IActionResult> UpdateTrip(string token, [FromBody] JsonElement body)
+            => Proxy(token, HttpMethod.Put,
+                tripId => $"{TravelBase}/api/trips/{tripId}",
+                body);
+
+        // ── Shared proxy core ─────────────────────────────────────────────────
         private async Task<IActionResult> Proxy(
             string shareToken,
             HttpMethod method,
             Func<int, string> buildUrl,
             JsonElement? body)
         {
-          
             var st = await _context.ShareTokens
                 .Include(x => x.Trip)
                 .FirstOrDefaultAsync(x => x.Token == shareToken);
@@ -131,6 +172,7 @@ namespace TravelService.Controllers
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
         private ContentResult BuildContentResult(string content, string contentType, int statusCode)
             => new ContentResult
             {
