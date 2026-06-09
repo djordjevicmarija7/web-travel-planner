@@ -65,8 +65,8 @@ namespace PlanningService
             {
                 options.AddPolicy("AllowFrontend", policy =>
                 {
-                    policy.WithOrigins("http://localhost:5173")
-                    .AllowAnyHeader()
+                    policy.WithOrigins("http://localhost:5173", "http://172.20.10.2:5173")
+.AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();
                 });

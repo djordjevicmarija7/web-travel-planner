@@ -67,9 +67,10 @@ function ShareSection({ tripId, trip }) {
     }
   }
 
-  function buildShareUrl(token) {
-    return `${window.location.origin}/shared/${token}`;
-  }
+function buildShareUrl(token) {
+  const base = import.meta.env.VITE_APP_URL || window.location.origin;
+  return `${base}/shared/${token}`;
+}
 
   async function copyLink(token) {
     await navigator.clipboard.writeText(buildShareUrl(token.token));
