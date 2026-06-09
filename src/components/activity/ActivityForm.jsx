@@ -25,32 +25,33 @@ function ActivityForm({ initialData, onSubmit, onCancel, loading, tripStartDate,
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   }
 
-function validate() {
-  const e = {};
+  function validate() {
+    const e = {};
 
-  if (!formData.name.trim()) e.name = 'Activity name is required.';
-  if (!formData.date) e.date = 'Date is required.';
+    if (!formData.name.trim()) e.name = 'Activity name is required.';
+    if (!formData.date) e.date = 'Date is required.';
 
-  if (formData.estimatedCost !== '' && Number(formData.estimatedCost) < 0) {
-    e.estimatedCost = 'Cost cannot be negative.';
-  }
-
-  if (formData.date && tripStartDate && tripEndDate) {
-    const activityDate = new Date(formData.date);
-    const startDate = new Date(tripStartDate);
-    const endDate = new Date(tripEndDate);
-
-    activityDate.setHours(0, 0, 0, 0);
-    startDate.setHours(0, 0, 0, 0);
-    endDate.setHours(0, 0, 0, 0);
-
-    if (activityDate < startDate || activityDate > endDate) {
-      e.date = 'Activity date must be within the trip dates.';
+    if (formData.estimatedCost !== '' && Number(formData.estimatedCost) < 0) {
+      e.estimatedCost = 'Cost cannot be negative.';
     }
+
+    if (formData.date && tripStartDate && tripEndDate) {
+      const activityDate = new Date(formData.date);
+      const startDate = new Date(tripStartDate);
+      const endDate = new Date(tripEndDate);
+
+      activityDate.setHours(0, 0, 0, 0);
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(0, 0, 0, 0);
+
+      if (activityDate < startDate || activityDate > endDate) {
+        e.date = 'Activity date must be within the trip dates.';
+      }
+    }
+
+    return e;
   }
 
-  return e;
-}
   function handleSubmit(e) {
     e.preventDefault();
     const ve = validate();
@@ -64,6 +65,21 @@ function validate() {
 
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      {tripStartDate && tripEndDate && (
+        <div
+          style={{
+            padding: '9px 13px',
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--accent-subtle)',
+            border: '1px solid var(--accent-border)',
+            fontSize: '11px',
+            color: 'var(--accent-dim)',
+          }}
+        >
+          Trip runs {tripStartDate} → {tripEndDate}. Activity date must stay within this range.
+        </div>
+      )}
+
       <Input
         label="Activity Name *"
         name="name"
@@ -73,7 +89,16 @@ function validate() {
         error={errors.name}
       />
       <FormRow>
-        <Input label="Date *" name="date" type="date" value={formData.date} onChange={handleChange} error={errors.date} />
+        <Input
+          label="Date *"
+          name="date"
+          type="date"
+          value={formData.date}
+          onChange={handleChange}
+          error={errors.date}
+          min={tripStartDate || undefined}
+          max={tripEndDate || undefined}
+        />
         <Input label="Time" name="time" type="time" value={formData.time} onChange={handleChange} />
       </FormRow>
       <Input
