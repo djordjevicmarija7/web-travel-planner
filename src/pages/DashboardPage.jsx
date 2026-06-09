@@ -8,6 +8,7 @@ import TripForm from '../components/trip/TripForm';
 import Toast from '../components/common/Toast';
 import { Button, Card, Badge, EmptyState, Modal, Spinner } from '../components/ui';
 import ConfirmDialog from '../components/common/ConfirmDialog';
+import { useSignalR } from '../hooks/useSignalR';
 
 function getTripDuration(start, end) {
   if (!start || !end) return null;
@@ -36,7 +37,14 @@ function DashboardPage() {
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
 
   useEffect(() => { fetchTrips(); }, []);
-
+useSignalR('http://localhost:5002/hubs/trips', {
+  TripCreated: (trip) => setTrips(prev => {
+    if (prev.find(t => t.id === trip.id)) return prev;
+    return [...prev, trip];
+  }),
+  TripUpdated: (trip) => setTrips(prev => prev.map(t => t.id === trip.id ? trip : t)),
+  TripDeleted: (id)  => setTrips(prev => prev.filter(t => t.id !== id)),
+}, []);
   async function fetchTrips() {
     try {
       setLoading(true);
@@ -46,16 +54,15 @@ function DashboardPage() {
     finally { setLoading(false); }
   }
 
-  async function handleCreate(formData) {
-    try {
-      setCreateLoading(true);
-      await tripService.create(formData);
-      setShowModal(false);
-      await fetchTrips();
-      showToast('Trip plan created!');
-    } catch { showToast('Error creating trip.', 'error'); }
-    finally { setCreateLoading(false); }
-  }
+async function handleCreate(formData) {
+  try {
+    setCreateLoading(true);
+    await tripService.create(formData);
+    setShowModal(false);
+    showToast('Trip plan created!');
+  } catch { showToast('Error creating trip.', 'error'); }
+  finally { setCreateLoading(false); }
+}
 
   function handleDelete(id, e) {
     e.stopPropagation();

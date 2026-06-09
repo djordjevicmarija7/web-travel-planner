@@ -8,6 +8,8 @@ import Toast from '../components/common/Toast';
 import { Button, Badge, Spinner } from '../components/ui';
 import { UserRole } from '../enums/user/UserRole';
 import ConfirmDialog from '../components/common/ConfirmDialog';
+import { useSignalR } from '../hooks/useSignalR';
+
 function AdminPage() {
   const { adminService } = useServices();
   const { user }         = useAuth();
@@ -22,6 +24,10 @@ function AdminPage() {
     if (user?.role !== UserRole.admin) { navigate('/dashboard'); return; }
     fetchUsers();
   }, []);
+useSignalR('http://localhost:5001/hubs/users', {
+  UserDeleted: (id) => setUsers(prev => prev.filter(u => u.id !== id)),
+  UserRoleUpdated: (updated) => setUsers(prev => prev.map(u => u.id === updated.id ? updated : u)),
+}, []);
 
   async function fetchUsers() {
     try {
