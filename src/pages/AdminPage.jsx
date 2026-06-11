@@ -43,7 +43,6 @@ useSignalR('http://localhost:5001/hubs/users', {
     setConfirmDialog({ isOpen: false, id: null, type: null, newRole: null });
     try {
       const updated = await adminService.updateRole(id, newRole);
-      setUsers((prev) => prev.map(u => u.id === id ? updated : u));
       showToast(`Role changed to ${newRole}.`);
     } catch { showToast('Error changing role.', 'error'); }
   }
@@ -57,7 +56,6 @@ useSignalR('http://localhost:5001/hubs/users', {
     setConfirmDialog({ isOpen: false, id: null, type: null, newRole: null });
     try {
       await adminService.deleteUser(id);
-      setUsers((prev) => prev.filter(u => u.id !== id));
       showToast('User deleted.');
     } catch { showToast('Error deleting user.', 'error'); }
   }

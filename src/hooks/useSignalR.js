@@ -22,7 +22,10 @@ export function useSignalR(url, events, deps = []) {
       connection.on(event, handler);
     });
 
-    connection.start().catch(err => console.warn('SignalR error:', url, err));
+    connection.start()
+
+  .then(() => console.log('SignalR connected:', url))
+    .catch(err => console.warn('SignalR error:', url, err));
 
     return () => {
       connection.stop();

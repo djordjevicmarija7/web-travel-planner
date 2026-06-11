@@ -94,7 +94,7 @@ useSignalR('http://localhost:5004/hubs/planning', {
     try {
       setEditLoading(true);
       const updated = await tripService.update(id, formData);
-      setTrip(updated); setEditModal(false);
+      setEditModal(false);
       showToast('Trip updated.');
     } catch { showToast('Error updating trip.', 'error'); }
     finally { setEditLoading(false); }
@@ -110,17 +110,15 @@ useSignalR('http://localhost:5004/hubs/planning', {
     catch { showToast('Error deleting trip.', 'error'); }
   }
 
-  async function handleAddActivity(formData) {
-    try {
-      setActivityLoading(true);
-      const created = await activityService.create(id, formData);
-      setActivities((prev) => [...prev, created]);
-      setActivityModal(false);
-      showToast('Activity added!');
-    } catch { showToast('Error adding activity.', 'error'); }
-    finally { setActivityLoading(false); }
-  }
-
+async function handleAddActivity(formData) {
+  try {
+    setActivityLoading(true);
+    await activityService.create(id, formData);
+    setActivityModal(false);
+    showToast('Activity added!');
+  } catch { showToast('Error adding activity.', 'error'); }
+  finally { setActivityLoading(false); }
+}
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
       <Spinner size={32} />
@@ -236,9 +234,9 @@ useSignalR('http://localhost:5004/hubs/planning', {
               tripId={id}
               tripStartDate={tripStartDate}
               tripEndDate={tripEndDate}
-              onAdded={(d)   => { setDestinations((prev) => [...prev, d]); showToast('Destination added!'); }}
-              onUpdated={(d) => { setDestinations((prev) => prev.map(x => x.id === d.id ? d : x)); showToast('Destination updated!'); }}
-              onDeleted={(did) => { setDestinations((prev) => prev.filter(x => x.id !== did)); showToast('Destination removed.'); }}
+              onAdded={(d)   => { showToast('Destination added!'); }}
+              onUpdated={(d) => { showToast('Destination updated!'); }}
+              onDeleted={(did) => { showToast('Destination removed.'); }}
             />
           </div>
         )}
@@ -272,9 +270,9 @@ useSignalR('http://localhost:5004/hubs/planning', {
             <ChecklistSection
               items={checklistItems}
               tripId={id}
-              onAdded={(item)  => setChecklist((prev) => [...prev, item])}
-              onToggled={(upd) => setChecklist((prev) => prev.map(i => i.id === upd.id ? upd : i))}
-              onDeleted={(did) => setChecklist((prev) => prev.filter(i => i.id !== did))}
+              onAdded={(item)  => {showToast('Item added!');}}
+              onToggled={(upd) => {}}
+              onDeleted={(did) => {showToast('Item removed.');}}
             />
           </div>
         )}
@@ -287,8 +285,8 @@ useSignalR('http://localhost:5004/hubs/planning', {
               expenses={expenses}
               tripId={id}
               budget={trip.budget}
-              onAdded={(e)   => { setExpenses((prev) => [...prev, e]); showToast('Expense added!'); }}
-              onDeleted={(did) => { setExpenses((prev) => prev.filter(e => e.id !== did)); showToast('Expense deleted.'); }}
+              onAdded={(e)   => { showToast('Expense added!'); }}
+              onDeleted={(did) => { showToast('Expense deleted.'); }}
             />
           </div>
         )}

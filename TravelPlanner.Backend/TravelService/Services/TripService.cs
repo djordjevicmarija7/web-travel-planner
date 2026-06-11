@@ -60,19 +60,27 @@ namespace TravelService.Services
                 .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
             if (trip == null) return false;
 
-            _context.Trips.Remove(trip);
-            await _context.SaveChangesAsync();
-
             var jwt = GenerateInternalToken(userId);
             var client = _httpClientFactory.CreateClient();
 
-            var req1 = new HttpRequestMessage(HttpMethod.Delete, $"http://localhost:5003/api/trips/{id}/all");
-            req1.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
-            await client.SendAsync(req1);
+            try
+            {
+                var req1 = new HttpRequestMessage(HttpMethod.Delete,
+                    $"http://localhost:5003/api/trips/{id}/activities/all");
+                req1.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
+                await client.SendAsync(req1);
 
-            var req2 = new HttpRequestMessage(HttpMethod.Delete, $"http://localhost:5004/api/trips/{id}/all");
-            req2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
-            await client.SendAsync(req2);
+                var req2 = new HttpRequestMessage(HttpMethod.Delete,
+                    $"http://localhost:5004/api/trips/{id}/all");
+                req2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
+                await client.SendAsync(req2);
+            }
+            catch
+            {
+            }
+
+            _context.Trips.Remove(trip);
+            await _context.SaveChangesAsync();
             await _hubContext.Clients.All.SendAsync("TripDeleted", id);
             return true;
         }
@@ -160,7 +168,7 @@ namespace TravelService.Services
 
             foreach (var trip in trips)
             {
-                var req1 = new HttpRequestMessage(HttpMethod.Delete, $"http://localhost:5003/api/trips/{trip.Id}/all");
+                var req1 = new HttpRequestMessage(HttpMethod.Delete, $"http://localhost:5003/api/trips/{trip.Id}/activities/all");
                 req1.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
                 await client.SendAsync(req1);
 
