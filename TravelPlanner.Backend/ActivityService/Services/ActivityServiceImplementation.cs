@@ -2,6 +2,7 @@
 using ActivityService.Data;
 using ActivityService.Hubs;
 using ActivityService.Models;
+using AutoMapper;
 using Common.DTOs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -14,14 +15,20 @@ namespace ActivityService.Services
             private readonly AppDbContext _context;
             private readonly TripApiClient _tripApiClient;
             private readonly IHubContext<ActivityHub> _hubContext;
-        public ActivityServiceImplementation(AppDbContext context, TripApiClient tripApiClient, IHubContext<ActivityHub> hubContext)
-            {
-                _context = context;
-                _tripApiClient = tripApiClient;
-                _hubContext = hubContext;
-            }
+        private readonly IMapper _mapper; 
 
-            public async Task<ActivityDto?> CreateAsync(int tripId, CreateActivityDto dto)
+        public ActivityServiceImplementation(AppDbContext context,
+            TripApiClient tripApiClient,
+            IHubContext<ActivityHub> hubContext,
+            IMapper mapper) 
+        {
+            _context = context;
+            _tripApiClient = tripApiClient;
+            _hubContext = hubContext;
+            _mapper = mapper; 
+        }
+
+        public async Task<ActivityDto?> CreateAsync(int tripId, CreateActivityDto dto)
             {
                 var trip = await _tripApiClient.GetByIdAsync(tripId);
                 if (trip == null)
@@ -53,9 +60,10 @@ namespace ActivityService.Services
 
                 _context.Activities.Add(activity);
                 await _context.SaveChangesAsync();
-            await _hubContext.Clients.All.SendAsync("ActivityCreated", MapToDto(activity));
-            return MapToDto(activity);
-            }
+            var result = _mapper.Map<ActivityDto>(activity); 
+            await _hubContext.Clients.All.SendAsync("ActivityCreated", result);
+            return result;
+        }
 
             public async Task<bool> DeleteAsync(int id, int tripId)
         {
@@ -73,19 +81,20 @@ namespace ActivityService.Services
 
         public async Task<List<ActivityDto>> GetAllByTripAsync(int tripId)
         {
-            return await _context.Activities
+            var activities = await _context.Activities
                 .Where(a => a.TripId == tripId)
                 .OrderBy(a => a.Date)
                 .ThenBy(a => a.Time)
-                .Select(a => MapToDto(a))
                 .ToListAsync();
+
+            return _mapper.Map<List<ActivityDto>>(activities);
         }
 
         public async Task<ActivityDto?> GetByIdAsync(int id, int tripId)
         {
             var activity = await _context.Activities
                 .FirstOrDefaultAsync(a => a.Id == id && a.TripId == tripId);
-            return activity == null ? null : MapToDto(activity);
+            return activity == null ? null : _mapper.Map<ActivityDto>(activity);
         }
 
         public async Task<ActivityDto?> UpdateAsync(int id, int tripId, UpdateActivityDto dto)
@@ -123,23 +132,10 @@ namespace ActivityService.Services
             activity.EstimatedCost = dto.EstimatedCost;
 
             await _context.SaveChangesAsync();
-            await _hubContext.Clients.All.SendAsync("ActivityUpdated", MapToDto(activity));
-            return MapToDto(activity);
-        }
-        private static ActivityDto MapToDto(Activity activity)
-        {
-            return new ActivityDto
-            {
-                Id = activity.Id,
-                Name = activity.Name,
-                Date = activity.Date,
-                Time = activity.Time,
-                Location = activity.Location,
-                Description = activity.Description,
-                EstimatedCost = activity.EstimatedCost,
-                Status = activity.Status,
-                TripId = activity.TripId
-            };
+
+            var result = _mapper.Map<ActivityDto>(activity); 
+            await _hubContext.Clients.All.SendAsync("ActivityUpdated", result);
+            return result;
         }
         public async Task DeleteAllByTripAsync(int tripId)
         {

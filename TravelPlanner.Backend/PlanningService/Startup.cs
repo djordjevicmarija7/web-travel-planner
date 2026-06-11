@@ -6,6 +6,7 @@ using PlanningService.Data;
 using PlanningService.Services;
 using System.Text;
 using PlanningService.Hubs;
+using PlanningService.Helpers;
 
 namespace PlanningService
 {
@@ -60,6 +61,7 @@ namespace PlanningService
             services.AddAuthorization();
             services.AddControllers();
             services.AddSignalR();
+            services.AddAutoMapper(typeof(PlanningServiceMapper));
 
             services.AddCors(options =>
             {

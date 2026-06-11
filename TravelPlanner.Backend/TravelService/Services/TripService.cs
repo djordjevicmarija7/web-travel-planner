@@ -9,6 +9,7 @@ using System.Text;
 using TravelService.Data;
 using TravelService.Hubs;
 using TravelService.Models;
+using AutoMapper;
 
 namespace TravelService.Services
 {
@@ -18,14 +19,17 @@ namespace TravelService.Services
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
         private readonly IHubContext<TripHub> _hubContext;
-
+        private readonly IMapper _mapper; 
+       
         public TripService(AppDbContext context, IHttpClientFactory httpClientFactory,
-            IConfiguration configuration, IHubContext<TripHub> hubContext)
+            IConfiguration configuration, IHubContext<TripHub> hubContext,
+            IMapper mapper) 
         {
             _context = context;
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
             _hubContext = hubContext;
+            _mapper = mapper; 
         }
 
         public async Task<TripDto> CreateAsync(CreateTripDto dto, int userId)
@@ -50,8 +54,9 @@ namespace TravelService.Services
             };
             _context.Trips.Add(trip);
             await _context.SaveChangesAsync();
-            await _hubContext.Clients.All.SendAsync("TripCreated", MapToDto(trip));
-            return MapToDto(trip);
+            var result = _mapper.Map<TripDto>(trip);
+            await _hubContext.Clients.All.SendAsync("TripCreated", result);
+            return result;
         }
 
         public async Task<bool> DeleteAsync(int id, int userId)
@@ -87,11 +92,12 @@ namespace TravelService.Services
 
         public async Task<List<TripDto>> GetAllAsync(int userId)
         {
-            return await _context.Trips
+            var trips = await _context.Trips
                 .Where(t => t.UserId == userId)
                 .Include(t => t.Destinations)
-                .Select(t => MapToDto(t))
                 .ToListAsync();
+
+            return _mapper.Map<List<TripDto>>(trips);
         }
 
         public async Task<TripDto?> GetByIdAsync(int id, int userId)
@@ -99,7 +105,8 @@ namespace TravelService.Services
             var trip = await _context.Trips
                 .Include(t => t.Destinations)
                 .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
-            return trip == null ? null : MapToDto(trip);
+
+            return trip == null ? null : _mapper.Map<TripDto>(trip);
         }
 
         public async Task<TripDto?> UpdateAsync(int id, UpdateTripDto dto, int userId)
@@ -127,36 +134,12 @@ namespace TravelService.Services
             trip.Notes = dto.Notes;
 
             await _context.SaveChangesAsync();
-            var returnDto = MapToDto(trip);
-            await _hubContext.Clients.All.SendAsync("TripUpdated", returnDto);
-            return returnDto;
+
+            var result = _mapper.Map<TripDto>(trip); 
+            await _hubContext.Clients.All.SendAsync("TripUpdated", result);
+            return result;
         }
 
-        private static TripDto MapToDto(Trip trip)
-        {
-            return new TripDto
-            {
-                Id = trip.Id,
-                Name = trip.Name,
-                Description = trip.Description,
-                StartDate = trip.StartDate,
-                EndDate = trip.EndDate,
-                Budget = trip.Budget,
-                Notes = trip.Notes,
-                UserId = trip.UserId,
-                Destinations = trip.Destinations.Select(d => new DestinationDto
-                {
-                    Id = d.Id,
-                    Name = d.Name,
-                    Location = d.Location,
-                    ArrivalDate = d.ArrivalDate,
-                    DepartureDate = d.DepartureDate,
-                    Description = d.Description,
-                    Notes = d.Notes,
-                    TripId = d.TripId
-                }).ToList()
-            };
-        }
         public async Task DeleteAllByUserAsync(int userId)
         {
             var trips = await _context.Trips

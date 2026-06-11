@@ -10,6 +10,7 @@ using Microsoft.ServiceFabric.Services.Runtime;
 using System.Fabric;
 using System.Text;
 using ActivityService.Hubs;
+using ActivityService.Helpers;
 
 namespace ActivityService
 {
@@ -76,6 +77,7 @@ namespace ActivityService
                         builder.Services.AddAuthorization();
                         builder.Services.AddControllers();
                         builder.Services.AddSignalR();
+                        builder.Services.AddAutoMapper(typeof(ActivityServiceMapper));
                         builder.Services.AddCors(options =>
                         {
                             options.AddPolicy("AllowFrontend", policy =>

@@ -10,6 +10,7 @@ using TravelService.Clients;
 using TravelService.Data;
 using TravelService.Services;
 using TravelService.Hubs;
+using TravelService.Helpers;
 
 namespace TravelService
 {
@@ -82,6 +83,7 @@ namespace TravelService
                         builder.Services.AddAuthorization();
                         builder.Services.AddControllers();
                         builder.Services.AddSignalR();
+                        builder.Services.AddAutoMapper(typeof(TravelServiceMapper));
                         builder.Services.AddCors(options =>
                         {
                             options.AddPolicy("AllowFrontend", policy =>

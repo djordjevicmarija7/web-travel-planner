@@ -1,4 +1,5 @@
-﻿using Common.DTOs;
+﻿using AutoMapper;
+using Common.DTOs;
 using Common.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -14,11 +15,13 @@ namespace UserService.Services
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IMapper _mapper;
 
-        public AuthService(AppDbContext context, IConfiguration configuration)
+        public AuthService(AppDbContext context, IConfiguration configuration, IMapper mapper)
         {
             _context = context;
             _configuration = configuration;
+            _mapper = mapper;
         }
 
         public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
@@ -37,8 +40,9 @@ namespace UserService.Services
             }
 
             string token = GenerateToken(user);
-
-            return MapToDto(user, token);
+            var result = _mapper.Map<AuthResponseDto>(user);
+            result.Token = token;
+            return result;
         }
 
         public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
@@ -63,7 +67,9 @@ namespace UserService.Services
 
             string token = GenerateToken(user);
 
-            return MapToDto(user, token);
+            var result = _mapper.Map<AuthResponseDto>(user); 
+            result.Token = token;
+            return result;
         }
 
         private string GenerateToken(User user)
@@ -91,17 +97,6 @@ namespace UserService.Services
 
 
             return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-        private static AuthResponseDto MapToDto(User user, string token)
-        {
-            return new AuthResponseDto
-            {
-                Id = user.Id,
-                Name = user.Name,
-                Email = user.Email,
-                Role = user.Role,
-                Token = token
-            };
         }
     }
 }

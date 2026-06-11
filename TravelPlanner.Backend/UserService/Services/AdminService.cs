@@ -1,4 +1,5 @@
-﻿using Common.DTOs;
+﻿using AutoMapper;
+using Common.DTOs;
 using Common.Enums;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -18,16 +19,17 @@ namespace UserService.Services
         private readonly AppDbContext _context;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
-
         private readonly IHubContext<UserHub> _hubContext;
+        private readonly IMapper _mapper;
 
         public AdminService(AppDbContext context, IHttpClientFactory httpClientFactory,
-            IConfiguration configuration, IHubContext<UserHub> hubContext)
+            IConfiguration configuration, IHubContext<UserHub> hubContext, IMapper mapper)
         {
             _context = context;
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
             _hubContext = hubContext;
+            _mapper = mapper; 
         }
 
         public async Task<bool> DeleteUserAsync(int id)
@@ -50,15 +52,14 @@ namespace UserService.Services
 
         public async Task<List<UserDto>> GetAllUsersAsync()
         {
-            return await _context.Users
-                .Select(u => MapToDto(u))
-                .ToListAsync();
+            var users = await _context.Users.ToListAsync();
+            return _mapper.Map<List<UserDto>>(users);
         }
 
         public async Task<UserDto?> GetUserByIdAsync(int id)
         {
             var user = await _context.Users.FindAsync(id);
-            return user == null ? null : MapToDto(user);
+            return user == null ? null : _mapper.Map<UserDto>(user);
         }
 
         public async Task<UserDto?> UpdateRoleAsync(int id, UpdateRoleDto dto)
@@ -74,7 +75,7 @@ namespace UserService.Services
             }
             user.Role = dto.Role;
             await _context.SaveChangesAsync();
-            var result = MapToDto(user);
+            var result = _mapper.Map<UserDto>(user);
             await _hubContext.Clients.All.SendAsync("UserRoleUpdated", result);
             return result;
         }
@@ -99,18 +100,6 @@ namespace UserService.Services
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        private static UserDto MapToDto(User u)
-        {
-            return new UserDto
-            {
-                Id = u.Id,
-                Name = u.Name,
-                Email = u.Email,
-                Role = u.Role,
-                CreatedAt = u.CreatedAt
-            };
         }
     }
 }

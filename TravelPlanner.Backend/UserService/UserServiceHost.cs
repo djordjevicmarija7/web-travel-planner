@@ -10,6 +10,7 @@ using System.Text.Json.Serialization;
 using UserService.Data;
 using UserService.Services;
 using UserService.Hubs;
+using UserService.Helpers;
 
 namespace UserService
 {
@@ -77,6 +78,7 @@ namespace UserService
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
                         builder.Services.AddSignalR();
+                        builder.Services.AddAutoMapper(typeof(UserServiceMapper));
                         builder.Services.AddHttpClient();
                         builder.Services.AddCors(options =>
                         {

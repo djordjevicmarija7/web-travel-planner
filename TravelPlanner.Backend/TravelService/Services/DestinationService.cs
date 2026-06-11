@@ -1,4 +1,5 @@
-﻿using Common.DTOs;
+﻿using AutoMapper;
+using Common.DTOs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using TravelService.Data;
@@ -11,11 +12,15 @@ namespace TravelService.Services
     {
         private readonly AppDbContext _context;
         private readonly IHubContext<DestinationHub> _hubContext;
+        private readonly IMapper _mapper; 
 
-        public DestinationService(AppDbContext context, IHubContext<DestinationHub> hubContext)
+        public DestinationService(AppDbContext context,
+            IHubContext<DestinationHub> hubContext,
+            IMapper mapper) 
         {
             _context = context;
             _hubContext = hubContext;
+            _mapper = mapper; 
         }
 
         public async Task<DestinationDto> CreateAsync(int tripId, CreateDestinationDto dto, int userId)
@@ -50,8 +55,10 @@ namespace TravelService.Services
 
             _context.Destinations.Add(destination);
             await _context.SaveChangesAsync();
-            await _hubContext.Clients.All.SendAsync("DestinationCreated", MapToDto(destination));
-            return MapToDto(destination);
+
+            var result = _mapper.Map<DestinationDto>(destination); 
+            await _hubContext.Clients.All.SendAsync("DestinationCreated", result);
+            return result;
 
         }
 
@@ -83,10 +90,11 @@ namespace TravelService.Services
             {
                 return new List<DestinationDto>();
             }
-            return await _context.Destinations
+            var destinations = await _context.Destinations
                 .Where(d => d.TripId == tripId)
-                .Select(d => MapToDto(d))
                 .ToListAsync();
+
+            return _mapper.Map<List<DestinationDto>>(destinations);
         }
 
         public async Task<DestinationDto?> GetByIdAsync(int id, int tripId, int userId)
@@ -100,7 +108,7 @@ namespace TravelService.Services
 
             var destination = await _context.Destinations
                 .FirstOrDefaultAsync(d => d.Id == id && d.TripId == tripId);
-            return destination == null ? null : MapToDto(destination);
+            return destination == null ? null : _mapper.Map<DestinationDto>(destination);
         }
 
         public async Task<DestinationDto?> UpdateAsync(int id, int tripId, UpdateDestinationDto dto, int userId)
@@ -135,22 +143,11 @@ namespace TravelService.Services
             destination.Notes = dto.Notes;
 
             await _context.SaveChangesAsync();
-            await _hubContext.Clients.All.SendAsync("DestinationUpdated", MapToDto(destination));
-            return MapToDto(destination);
+
+            var result = _mapper.Map<DestinationDto>(destination); 
+            await _hubContext.Clients.All.SendAsync("DestinationUpdated", result);
+            return result;
         }
-        private static DestinationDto MapToDto(Destination d)
-        {
-            return new DestinationDto
-            {
-                Id = d.Id,
-                Name = d.Name,
-                Location = d.Location,
-                ArrivalDate = d.ArrivalDate,
-                DepartureDate = d.DepartureDate,
-                Description = d.Description,
-                Notes = d.Notes,
-                TripId = d.TripId
-            };
-        }
+       
     }
 }

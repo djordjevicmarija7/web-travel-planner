@@ -1,4 +1,5 @@
-﻿using Common.DTOs;
+﻿using AutoMapper;
+using Common.DTOs;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.ServiceFabric.Data;
@@ -14,15 +15,17 @@ namespace PlanningService.Services
     {
         private readonly AppDbContext _context;
         private readonly IReliableStateManager _stateManager;
+        private readonly IMapper _mapper;
         private const string TotalCacheName = "expenseTotals";
         private readonly IHubContext<PlanningHub> _hubContext;
 
         public ExpenseService(AppDbContext context, IReliableStateManager stateManager,
-            IHubContext<PlanningHub> hubContext)
+            IHubContext<PlanningHub> hubContext, IMapper mapper)
         {
             _context = context;
             _stateManager = stateManager;
             _hubContext = hubContext;
+            _mapper = mapper;
         }
 
         public async Task<ExpenseDto> CreateAsync(int tripId, CreateExpenseDto dto)
@@ -40,8 +43,9 @@ namespace PlanningService.Services
             await _context.SaveChangesAsync();
 
             await IncrementTotalAsync(tripId, dto.Amount);
-            await _hubContext.Clients.All.SendAsync("ExpenseCreated", ExpenseMapper.MapToDto(expense));
-            return ExpenseMapper.MapToDto(expense);
+            var result = _mapper.Map<ExpenseDto>(expense); 
+            await _hubContext.Clients.All.SendAsync("ExpenseCreated", result);
+            return result;
         }
 
         public async Task<bool> DeleteAsync(int id, int tripId)
@@ -73,7 +77,7 @@ namespace PlanningService.Services
             decimal total = expenses.Sum(e => e.Amount);
             await UpdateTotalAsync(tripId, total);
 
-            return expenses.Select(ExpenseMapper.MapToDto).ToList();
+            return _mapper.Map<List<ExpenseDto>>(expenses);
         }
 
         private async Task UpdateTotalAsync(int tripId, decimal total)
