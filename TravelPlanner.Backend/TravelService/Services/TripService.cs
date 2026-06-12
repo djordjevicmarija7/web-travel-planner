@@ -10,26 +10,33 @@ using TravelService.Data;
 using TravelService.Hubs;
 using TravelService.Models;
 using AutoMapper;
+using Common.Interfaces;
 
 namespace TravelService.Services
 {
     public class TripService : ITripService
     {
         private readonly AppDbContext _context;
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IActivityClient _activityClient;
+        private readonly IPlanningClient _planningClient;
         private readonly IConfiguration _configuration;
         private readonly IHubContext<TripHub> _hubContext;
-        private readonly IMapper _mapper; 
-       
-        public TripService(AppDbContext context, IHttpClientFactory httpClientFactory,
-            IConfiguration configuration, IHubContext<TripHub> hubContext,
-            IMapper mapper) 
+        private readonly IMapper _mapper;
+
+        public TripService(
+            AppDbContext context,
+            IActivityClient activityClient,
+            IPlanningClient planningClient,
+            IConfiguration configuration,
+            IHubContext<TripHub> hubContext,
+            IMapper mapper)
         {
             _context = context;
-            _httpClientFactory = httpClientFactory;
+            _activityClient = activityClient;
+            _planningClient = planningClient;
             _configuration = configuration;
             _hubContext = hubContext;
-            _mapper = mapper; 
+            _mapper = mapper;
         }
 
         public async Task<TripDto> CreateAsync(CreateTripDto dto, int userId)
@@ -66,28 +73,32 @@ namespace TravelService.Services
             if (trip == null) return false;
 
             var jwt = GenerateInternalToken(userId);
-            var client = _httpClientFactory.CreateClient();
 
-            try
-            {
-                var req1 = new HttpRequestMessage(HttpMethod.Delete,
-                    $"http://localhost:5003/api/trips/{id}/activities/all");
-                req1.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
-                await client.SendAsync(req1);
-
-                var req2 = new HttpRequestMessage(HttpMethod.Delete,
-                    $"http://localhost:5004/api/trips/{id}/all");
-                req2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
-                await client.SendAsync(req2);
-            }
-            catch
-            {
-            }
+            await _activityClient.DeleteAllByTripAsync(id, jwt);
+            await _planningClient.DeleteAllByTripAsync(id, jwt);
 
             _context.Trips.Remove(trip);
             await _context.SaveChangesAsync();
             await _hubContext.Clients.All.SendAsync("TripDeleted", id);
             return true;
+        }
+
+        public async Task DeleteAllByUserAsync(int userId)
+        {
+            var trips = await _context.Trips
+                .Where(t => t.UserId == userId)
+                .ToListAsync();
+
+            var jwt = GenerateInternalToken(userId);
+
+            foreach (var trip in trips)
+            {
+                await _activityClient.DeleteAllByTripAsync(trip.Id, jwt);
+                await _planningClient.DeleteAllByTripAsync(trip.Id, jwt);
+            }
+
+            _context.Trips.RemoveRange(trips);
+            await _context.SaveChangesAsync();
         }
 
         public async Task<List<TripDto>> GetAllAsync(int userId)
@@ -140,29 +151,6 @@ namespace TravelService.Services
             return result;
         }
 
-        public async Task DeleteAllByUserAsync(int userId)
-        {
-            var trips = await _context.Trips
-                .Where(t => t.UserId == userId)
-                .ToListAsync();
-
-            var jwt = GenerateInternalToken(userId);
-            var client = _httpClientFactory.CreateClient();
-
-            foreach (var trip in trips)
-            {
-                var req1 = new HttpRequestMessage(HttpMethod.Delete, $"http://localhost:5003/api/trips/{trip.Id}/activities/all");
-                req1.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
-                await client.SendAsync(req1);
-
-                var req2 = new HttpRequestMessage(HttpMethod.Delete, $"http://localhost:5004/api/trips/{trip.Id}/all");
-                req2.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
-                await client.SendAsync(req2);
-            }
-
-            _context.Trips.RemoveRange(trips);
-            await _context.SaveChangesAsync();
-        }
         private string GenerateInternalToken(int userId)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));

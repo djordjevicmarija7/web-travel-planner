@@ -11,6 +11,7 @@ using TravelService.Data;
 using TravelService.Services;
 using TravelService.Hubs;
 using TravelService.Helpers;
+using Common.Interfaces;
 
 namespace TravelService
 {
@@ -41,13 +42,13 @@ namespace TravelService
                         builder.Services.AddScoped<ITripService, TripService>();
                         builder.Services.AddScoped<IDestinationService, DestinationService>();
                         builder.Services.AddScoped<IShareService, ShareService>();
-                        builder.Services.AddHttpClient<ActivityApiClient>(c =>
+                        builder.Services.AddHttpClient<IActivityClient, ActivityApiClient>(c =>
                             c.BaseAddress = new Uri("http://localhost:5003"));
-
-                        builder.Services.AddHttpClient<ExpenseApiClient>(c =>
+                        builder.Services.AddHttpClient<IExpenseClient, ExpenseApiClient>(c =>
                             c.BaseAddress = new Uri("http://localhost:5004"));
-
-                        builder.Services.AddHttpClient<ChecklistApiClient>(c =>
+                        builder.Services.AddHttpClient<IChecklistClient, ChecklistApiClient>(c =>
+                            c.BaseAddress = new Uri("http://localhost:5004"));
+                        builder.Services.AddHttpClient<IPlanningClient, PlanningApiClient>(c =>
                             c.BaseAddress = new Uri("http://localhost:5004"));
                         builder.Services.AddHttpClient();
                         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

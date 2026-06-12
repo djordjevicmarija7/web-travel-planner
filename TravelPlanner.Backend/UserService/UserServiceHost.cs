@@ -11,6 +11,8 @@ using UserService.Data;
 using UserService.Services;
 using UserService.Hubs;
 using UserService.Helpers;
+using UserService.Clients;
+using Common.Interfaces;
 
 namespace UserService
 {
@@ -40,7 +42,8 @@ namespace UserService
 
                         builder.Services.AddScoped<IAuthService, AuthService>();
                         builder.Services.AddScoped<IAdminService, AdminService>();
-
+                        builder.Services.AddHttpClient<ITripClient, TripApiClient>(c =>
+    c.BaseAddress = new Uri("http://localhost:5002"));
                         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                             .AddJwtBearer(options =>
                             {

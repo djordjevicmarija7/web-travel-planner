@@ -4,6 +4,7 @@ using ActivityService.Hubs;
 using ActivityService.Models;
 using AutoMapper;
 using Common.DTOs;
+using Common.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,13 +13,13 @@ namespace ActivityService.Services
     public class ActivityServiceImplementation : IActivityService
     {
 
-            private readonly AppDbContext _context;
-            private readonly TripApiClient _tripApiClient;
-            private readonly IHubContext<ActivityHub> _hubContext;
+        private readonly AppDbContext _context;
+        private readonly ITripClient _tripApiClient;
+        private readonly IHubContext<ActivityHub> _hubContext;
         private readonly IMapper _mapper; 
 
         public ActivityServiceImplementation(AppDbContext context,
-            TripApiClient tripApiClient,
+            ITripClient tripApiClient,
             IHubContext<ActivityHub> hubContext,
             IMapper mapper) 
         {

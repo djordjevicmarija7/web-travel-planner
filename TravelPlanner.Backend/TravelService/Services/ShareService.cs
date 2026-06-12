@@ -1,5 +1,6 @@
 ﻿using Common.DTOs;
 using Common.Enums;
+using Common.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -14,16 +15,13 @@ namespace TravelService.Services
     public class ShareService : IShareService
     {
         private readonly AppDbContext _context;
-        private readonly ActivityApiClient _activityClient;
-        private readonly ChecklistApiClient _checklistClient;
-        private readonly ExpenseApiClient _expenseClient;
         private readonly IConfiguration _config;
+        private readonly IActivityClient _activityClient;
+        private readonly IChecklistClient _checklistClient;
+        private readonly IExpenseClient _expenseClient;
 
-        public ShareService(
-            AppDbContext context,
-            ActivityApiClient activityClient,
-            ChecklistApiClient checklistClient,
-            ExpenseApiClient expenseClient,
+        public ShareService(AppDbContext context, IActivityClient activityClient,
+            IChecklistClient checklistClient, IExpenseClient expenseClient,
             IConfiguration config)
         {
             _context = context;
@@ -32,11 +30,6 @@ namespace TravelService.Services
             _expenseClient = expenseClient;
             _config = config;
         }
-
-        // ── Genera interni service-to-service JWT ─────────────────────────────
-        // Koristi isti key/issuer/audience kao normalni JWT, ali sa specijalnim
-        // "service" claim-om. Trip vlasnik (userId) se proslijeđuje tako da
-        // downstream servisi mogu da provjere vlasništvo ako treba.
         private string GenerateInternalToken(int tripUserId)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
@@ -53,13 +46,11 @@ namespace TravelService.Services
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(2), // kratko trajanje
+                expires: DateTime.UtcNow.AddMinutes(2), 
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(jwtToken);
         }
-
-        // ── Public methods ────────────────────────────────────────────────────
 
         public async Task<ShareTokenDto> CreateTokenAsync(int tripId, CreateShareTokenDto dto, int userId)
         {
@@ -96,7 +87,6 @@ namespace TravelService.Services
             if (shareToken == null || !shareToken.IsActive || shareToken.ExpiresAt < DateTime.UtcNow)
                 return null;
 
-            // Generišemo interni JWT sa userId vlasnika tripa
             var internalJwt = GenerateInternalToken(shareToken.Trip.UserId);
 
             var activities = await _activityClient.GetByTripIdAsync(shareToken.TripId, internalJwt);
@@ -138,8 +128,7 @@ namespace TravelService.Services
             return true;
         }
 
-        // ── Mappers ───────────────────────────────────────────────────────────
-
+       
         private static ShareTokenDto MapToDto(ShareToken st) => new ShareTokenDto
         {
             Id = st.Id,

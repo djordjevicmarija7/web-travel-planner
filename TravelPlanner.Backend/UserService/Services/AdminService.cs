@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Common.DTOs;
 using Common.Enums;
+using Common.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -17,16 +18,16 @@ namespace UserService.Services
     public class AdminService : IAdminService
     {
         private readonly AppDbContext _context;
-        private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
+        private readonly ITripClient _tripClient;
         private readonly IHubContext<UserHub> _hubContext;
         private readonly IMapper _mapper;
 
-        public AdminService(AppDbContext context, IHttpClientFactory httpClientFactory,
+        public AdminService(AppDbContext context, ITripClient tripClient,
             IConfiguration configuration, IHubContext<UserHub> hubContext, IMapper mapper)
         {
             _context = context;
-            _httpClientFactory = httpClientFactory;
+            _tripClient = tripClient;
             _configuration = configuration;
             _hubContext = hubContext;
             _mapper = mapper; 
@@ -41,11 +42,8 @@ namespace UserService.Services
             await _context.SaveChangesAsync();
 
             var jwt = GenerateInternalToken(id);
-            var client = _httpClientFactory.CreateClient();
+            await _tripClient.DeleteAllByUserAsync(id, jwt);
 
-            var req = new HttpRequestMessage(HttpMethod.Delete, $"http://localhost:5002/api/trips/user/{id}/all");
-            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
-            await client.SendAsync(req);
             await _hubContext.Clients.All.SendAsync("UserDeleted", id);
             return true;
         }
