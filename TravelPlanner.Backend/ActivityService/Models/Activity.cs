@@ -10,7 +10,6 @@ namespace ActivityService.Models
         public string Name { get; set; } = string.Empty;
         [Required]
         public DateTime Date { get; set; }
-
         public string? Time { get; set; }
         public string? Location { get; set; }
         public string? Description { get; set; }

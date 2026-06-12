@@ -12,9 +12,7 @@
         public int UserId { get; set; }
         public List<DestinationDto> Destinations { get; set; } = new();
         public List<ActivityDto> Activities { get; set; } = new();
-
         public List<ChecklistItemDto> ChecklistItems { get; set; } = new();
-
         public List<ExpenseDto> Expenses { get; set; } = new();
     }
 }

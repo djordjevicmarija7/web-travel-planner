@@ -107,7 +107,7 @@ namespace PlanningService.Services
         private async Task DecrementTotalAsync(int tripId, decimal amount)
         {
             var dict = await _stateManager
-    .GetOrAddAsync<IReliableDictionary<int, string>>(TotalCacheName);
+                .GetOrAddAsync<IReliableDictionary<int, string>>(TotalCacheName);
 
             using var tx = _stateManager.CreateTransaction();
             var current = await dict.TryGetValueAsync(tx, tripId);

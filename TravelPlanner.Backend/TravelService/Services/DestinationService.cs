@@ -26,7 +26,7 @@ namespace TravelService.Services
         public async Task<DestinationDto> CreateAsync(int tripId, CreateDestinationDto dto, int userId)
         {
             var trip = await _context.Trips
-     .FirstOrDefaultAsync(t => t.Id == tripId && t.UserId == userId);
+                .FirstOrDefaultAsync(t => t.Id == tripId && t.UserId == userId);
 
             if (trip == null)
             {
@@ -114,7 +114,7 @@ namespace TravelService.Services
         public async Task<DestinationDto?> UpdateAsync(int id, int tripId, UpdateDestinationDto dto, int userId)
         {
             var trip = await _context.Trips
-    .FirstOrDefaultAsync(t => t.Id == tripId && t.UserId == userId);
+                .FirstOrDefaultAsync(t => t.Id == tripId && t.UserId == userId);
 
             if (trip == null)
             {

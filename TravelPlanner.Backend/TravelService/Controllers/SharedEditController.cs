@@ -33,7 +33,6 @@ namespace TravelService.Controllers
             _config = config;
         }
 
-        // ── Activities ────────────────────────────────────────────────────────
         [HttpPost("activities")]
         public Task<IActionResult> CreateActivity(string token, [FromBody] JsonElement body)
             => Proxy(token, HttpMethod.Post,
@@ -52,7 +51,6 @@ namespace TravelService.Controllers
                 tripId => $"{ActivityBase}/api/trips/{tripId}/activities/{activityId}",
                 null);
 
-        // ── Checklist ─────────────────────────────────────────────────────────
         [HttpPost("checklist")]
         public Task<IActionResult> CreateChecklistItem(string token, [FromBody] JsonElement body)
             => Proxy(token, HttpMethod.Post,
@@ -71,7 +69,6 @@ namespace TravelService.Controllers
                 tripId => $"{PlanningBase}/api/trips/{tripId}/checklist/{itemId}",
                 null);
 
-        // ── Destinations ──────────────────────────────────────────────────────
         [HttpPost("destinations")]
         public Task<IActionResult> CreateDestination(string token, [FromBody] JsonElement body)
             => Proxy(token, HttpMethod.Post,
@@ -90,7 +87,6 @@ namespace TravelService.Controllers
                 tripId => $"{TravelBase}/api/trips/{tripId}/destinations/{destId}",
                 null);
 
-        // ── Expenses ──────────────────────────────────────────────────────────
         [HttpPost("expenses")]
         public Task<IActionResult> CreateExpense(string token, [FromBody] JsonElement body)
             => Proxy(token, HttpMethod.Post,
@@ -103,14 +99,12 @@ namespace TravelService.Controllers
                 tripId => $"{PlanningBase}/api/trips/{tripId}/expenses/{expenseId}",
                 null);
 
-        // ── Trip (basic info) ─────────────────────────────────────────────────
         [HttpPut("trip")]
         public Task<IActionResult> UpdateTrip(string token, [FromBody] JsonElement body)
             => Proxy(token, HttpMethod.Put,
                 tripId => $"{TravelBase}/api/trips/{tripId}",
                 body);
 
-        // ── Shared proxy core ─────────────────────────────────────────────────
         private async Task<IActionResult> Proxy(
             string shareToken,
             HttpMethod method,
