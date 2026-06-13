@@ -1,26 +1,26 @@
 import { useState } from 'react';
 import expenseService from '../../services/expenseService';
-import { Button, Input, Textarea, Select, FormRow, Modal, EmptyState, ProgressBar } from '../ui';
+import { Button, Modal, EmptyState, ProgressBar } from '../ui';
 import { ExpenseCategory } from '../../enums/expense/ExpenseCategory';
+import ExpenseForm from './ExpenseForm';
+import ExpenseCard from './ExpenseCard';
 import ConfirmDialog from '../common/ConfirmDialog';
-import { formatDate } from '../../utils/formatDate';
 
 const CATEGORIES = [
-  { value: ExpenseCategory.transport,      label: 'Transport',      icon: '✈' },
-  { value: ExpenseCategory.accommodation,  label: 'Accommodation',  icon: '🏨' },
-  { value: ExpenseCategory.food,           label: 'Food & Drink',   icon: '🍽' },
-  { value: ExpenseCategory.tickets,        label: 'Tickets',        icon: '🎟' },
-  { value: ExpenseCategory.shopping,       label: 'Shopping',       icon: '🛍' },
-  { value: ExpenseCategory.other,          label: 'Other',          icon: '📌' },
+  { value: ExpenseCategory.transport,     label: 'Transport',     icon: '✈' },
+  { value: ExpenseCategory.accommodation, label: 'Accommodation', icon: '🏨' },
+  { value: ExpenseCategory.food,          label: 'Food & Drink',  icon: '🍽' },
+  { value: ExpenseCategory.tickets,       label: 'Tickets',       icon: '🎟' },
+  { value: ExpenseCategory.shopping,      label: 'Shopping',      icon: '🛍' },
+  { value: ExpenseCategory.other,         label: 'Other',         icon: '📌' },
 ];
 
-const emptyForm = { name: '', category: ExpenseCategory.other, amount: '', date: '', description: '' };
+const statLabelStyle = { fontSize: '10px', letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '6px' };
+const statValueStyle = { fontFamily: 'var(--font-display)', fontSize: '26px', fontWeight: '300' };
 
 function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
-  const [formData, setFormData] = useState(emptyForm);
-  const [errors, setErrors]     = useState({});
   const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading]   = useState(false);
+  const [loading, setLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
 
   const totalSpent = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
@@ -32,29 +32,11 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
     return acc;
   }, {});
 
-  function handleChange(e) {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
-  }
-
-  function validate() {
-    const e = {};
-    if (!formData.name.trim()) e.name = 'Expense name is required.';
-    if (!formData.amount || Number(formData.amount) <= 0) e.amount = 'Amount must be greater than 0.';
-    if (!formData.date) e.date = 'Date is required.';
-    return e;
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    const ve = validate();
-    if (Object.keys(ve).length > 0) { setErrors(ve); return; }
-    setErrors({}); setLoading(true);
+  async function handleSubmit(formData) {
+    setLoading(true);
     try {
-      const created = await expenseService.create(tripId, { ...formData, amount: Number(formData.amount) });
+      const created = await expenseService.create(tripId, formData);
       onAdded(created);
-      setFormData(emptyForm);
       setShowModal(false);
     } catch { alert('Error adding expense.'); } finally { setLoading(false); }
   }
@@ -62,7 +44,7 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
   function handleDelete(id) {
     setConfirmDialog({ isOpen: true, id });
   }
- 
+
   async function handleDeleteConfirmed() {
     const id = confirmDialog.id;
     setConfirmDialog({ isOpen: false, id: null });
@@ -147,80 +129,25 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
         />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          {[...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).map((expense) => {
-            const cat = catMap[expense.category];
-            return (
-              <div key={expense.id} style={{
-                background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-md)', padding: '13px 16px',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                transition: 'border-color var(--transition-fast)',
-              }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border-default)'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '13px' }}>
-                  <div style={{
-                    width: '38px', height: '38px', borderRadius: 'var(--radius-sm)',
-                    background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '17px',
-                    flexShrink: 0,
-                  }}>
-                    {cat?.icon || '📌'}
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: '500', fontSize: '14px' }}>{expense.name}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      {cat?.label || expense.category} · {formatDate(expense.date)}
-                    </div>
-                    {expense.description && (
-                      <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                        {expense.description}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '15px', fontWeight: '500', color: 'var(--text-primary)' }}>
-                    € {expense.amount.toFixed(2)}
-                  </span>
-                  <button
-                    onClick={() => handleDelete(expense.id)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '14px', padding: '4px', transition: 'color var(--transition-fast)' }}
-                    onMouseEnter={e => e.target.style.color = 'var(--status-cancelled)'}
-                    onMouseLeave={e => e.target.style.color = 'var(--text-muted)'}
-                  >
-                    ✕
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+          {[...expenses].sort((a, b) => new Date(b.date) - new Date(a.date)).map((expense) => (
+            <ExpenseCard key={expense.id} expense={expense} onDelete={handleDelete} />
+          ))}
         </div>
       )}
 
       {/* Add Expense Modal */}
-      <Modal open={showModal} onClose={() => { setShowModal(false); setFormData(emptyForm); setErrors({}); }} title="New Expense">
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <Input label="Name *" name="name" value={formData.name} onChange={handleChange} placeholder="e.g. Plane tickets" error={errors.name} />
-          <FormRow>
-            <Select label="Category" name="category" value={formData.category} onChange={handleChange}>
-              {CATEGORIES.map((c) => (
-                <option key={c.value} value={c.value} style={{ background: 'var(--bg-elevated)' }}>
-                  {c.icon} {c.label}
-                </option>
-              ))}
-            </Select>
-            <Input label="Amount (€) *" name="amount" type="number" min="0.01" step="0.01" value={formData.amount} onChange={handleChange} placeholder="e.g. 250" error={errors.amount} />
-          </FormRow>
-          <Input label="Date *" name="date" type="date" value={formData.date} onChange={handleChange} error={errors.date} />
-          <Textarea label="Description" name="description" value={formData.description} onChange={handleChange} placeholder="Extra notes..." style={{ height: '64px' }} />
-          <div style={{ display: 'flex', gap: '10px', paddingTop: '4px' }}>
-            <Button type="submit" variant="primary" disabled={loading}>{loading ? 'Saving...' : 'Save Expense'}</Button>
-            <Button type="button" variant="ghost" onClick={() => { setShowModal(false); setFormData(emptyForm); setErrors({}); }}>Cancel</Button>
-          </div>
-        </form>
+      <Modal
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        title="New Expense"
+      >
+        <ExpenseForm
+          onSubmit={handleSubmit}
+          onCancel={() => setShowModal(false)}
+          loading={loading}
+        />
       </Modal>
+
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title="Delete Expense"
@@ -234,8 +161,5 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
     </div>
   );
 }
-
-const statLabelStyle = { fontSize: '10px', letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '6px' };
-const statValueStyle = { fontFamily: 'var(--font-display)', fontSize: '26px', fontWeight: '300' };
 
 export default ExpenseSection;

@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useServices } from '../context/ServiceContext';
 import { useToast } from '../hooks/useToast';
 import Navbar from '../components/common/Navbar';
+import SectionTitle from '../components/common/SectionTitle';
+import InfoBlock from '../components/common/InfoBlock';
 import TripForm from '../components/trip/TripForm';
 import ActivityForm from '../components/activity/ActivityForm';
 import ActivityList from '../components/activity/ActivityList';
@@ -19,7 +21,7 @@ const TABS = [
   { id: 'Overview',     icon: '◎',  label: 'Overview' },
   { id: 'Destinations', icon: '🗺',  label: 'Destinations' },
   { id: 'Activities',   icon: '🗓',  label: 'Activities' },
-  { id: 'Checklist',    icon: '✓',   label: 'Checklist' },
+  { id: 'Checklist',    icon: '✔',   label: 'Checklist' },
   { id: 'Expenses',     icon: '💳',  label: 'Expenses' },
   { id: 'Share',        icon: '🔗',  label: 'Share' },
 ];
@@ -45,32 +47,31 @@ function TripDetailPage() {
 
   useEffect(() => { fetchAll(); }, [id]);
 
-useSignalR('http://localhost:5002/hubs/trips', {
-  TripUpdated: (updated) => { if (updated.id === Number(id)) setTrip(updated); },
-  TripDeleted: (deletedId) => { if (deletedId === Number(id)) navigate('/dashboard'); },
-}, [id]);
+  useSignalR('http://localhost:5002/hubs/trips', {
+    TripUpdated: (updated) => { if (updated.id === Number(id)) setTrip(updated); },
+    TripDeleted: (deletedId) => { if (deletedId === Number(id)) navigate('/dashboard'); },
+  }, [id]);
 
+  useSignalR('http://localhost:5002/hubs/destinations', {
+    DestinationCreated: (d) => { if (d.tripId === Number(id)) setDestinations(prev => prev.find(x => x.id === d.id) ? prev : [...prev, d]); },
+    DestinationUpdated: (d) => { if (d.tripId === Number(id)) setDestinations(prev => prev.map(x => x.id === d.id ? d : x)); },
+    DestinationDeleted: (did) => setDestinations(prev => prev.filter(x => x.id !== did)),
+  }, [id]);
 
-useSignalR('http://localhost:5002/hubs/destinations', {
-  DestinationCreated: (d) => { if (d.tripId === Number(id)) setDestinations(prev => prev.find(x => x.id === d.id) ? prev : [...prev, d]); },
-  DestinationUpdated: (d) => { if (d.tripId === Number(id)) setDestinations(prev => prev.map(x => x.id === d.id ? d : x)); },
-  DestinationDeleted: (did) => setDestinations(prev => prev.filter(x => x.id !== did)),
-}, [id]);
+  useSignalR('http://localhost:5003/hubs/activities', {
+    ActivityCreated: (a) => { if (a.tripId === Number(id)) setActivities(prev => prev.find(x => x.id === a.id) ? prev : [...prev, a]); },
+    ActivityUpdated: (a) => { if (a.tripId === Number(id)) setActivities(prev => prev.map(x => x.id === a.id ? a : x)); },
+    ActivityDeleted: (aid) => setActivities(prev => prev.filter(x => x.id !== aid)),
+  }, [id]);
 
+  useSignalR('http://localhost:5004/hubs/planning', {
+    ChecklistItemCreated: (item) => { if (item.tripId === Number(id)) setChecklist(prev => prev.find(x => x.id === item.id) ? prev : [...prev, item]); },
+    ChecklistItemToggled: (item) => { if (item.tripId === Number(id)) setChecklist(prev => prev.map(x => x.id === item.id ? item : x)); },
+    ChecklistItemDeleted: (iid) => setChecklist(prev => prev.filter(x => x.id !== iid)),
+    ExpenseCreated: (e) => { if (e.tripId === Number(id)) setExpenses(prev => prev.find(x => x.id === e.id) ? prev : [...prev, e]); },
+    ExpenseDeleted: (eid) => setExpenses(prev => prev.filter(x => x.id !== eid)),
+  }, [id]);
 
-useSignalR('http://localhost:5003/hubs/activities', {
-  ActivityCreated: (a) => { if (a.tripId === Number(id)) setActivities(prev => prev.find(x => x.id === a.id) ? prev : [...prev, a]); },
-  ActivityUpdated: (a) => { if (a.tripId === Number(id)) setActivities(prev => prev.map(x => x.id === a.id ? a : x)); },
-  ActivityDeleted: (aid) => setActivities(prev => prev.filter(x => x.id !== aid)),
-}, [id]);
-
-useSignalR('http://localhost:5004/hubs/planning', {
-  ChecklistItemCreated: (item) => { if (item.tripId === Number(id)) setChecklist(prev => prev.find(x => x.id === item.id) ? prev : [...prev, item]); },
-  ChecklistItemToggled: (item) => { if (item.tripId === Number(id)) setChecklist(prev => prev.map(x => x.id === item.id ? item : x)); },
-  ChecklistItemDeleted: (iid) => setChecklist(prev => prev.filter(x => x.id !== iid)),
-  ExpenseCreated: (e) => { if (e.tripId === Number(id)) setExpenses(prev => prev.find(x => x.id === e.id) ? prev : [...prev, e]); },
-  ExpenseDeleted: (eid) => setExpenses(prev => prev.filter(x => x.id !== eid)),
-}, [id]);
   async function fetchAll() {
     try {
       setLoading(true);
@@ -103,22 +104,23 @@ useSignalR('http://localhost:5004/hubs/planning', {
   function handleDelete() {
     setConfirmDialog({ isOpen: true });
   }
- 
+
   async function handleDeleteConfirmed() {
     setConfirmDialog({ isOpen: false });
     try { await tripService.remove(id); navigate('/dashboard'); }
     catch { showToast('Error deleting trip.', 'error'); }
   }
 
-async function handleAddActivity(formData) {
-  try {
-    setActivityLoading(true);
-    await activityService.create(id, formData);
-    setActivityModal(false);
-    showToast('Activity added!');
-  } catch { showToast('Error adding activity.', 'error'); }
-  finally { setActivityLoading(false); }
-}
+  async function handleAddActivity(formData) {
+    try {
+      setActivityLoading(true);
+      await activityService.create(id, formData);
+      setActivityModal(false);
+      showToast('Activity added!');
+    } catch { showToast('Error adding activity.', 'error'); }
+    finally { setActivityLoading(false); }
+  }
+
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px' }}>
       <Spinner size={32} />
@@ -206,7 +208,7 @@ async function handleAddActivity(formData) {
               <StatCard label="End Date"     value={tripEndDate}    icon="📅" />
               <StatCard label="Destinations" value={destinations.length} icon="🗺" />
               <StatCard label="Activities"   value={activities.length}   icon="🗓" />
-              <StatCard label="Checklist"    value={completedChecklist + '/' + checklistItems.length} icon="✓" />
+              <StatCard label="Checklist"    value={completedChecklist + '/' + checklistItems.length} icon="✔" />
               <StatCard label="Total Spent"  value={'€ ' + totalSpent.toFixed(2)} icon="💳" />
               {trip.budget != null && <StatCard label="Budget"    value={'€ ' + trip.budget.toLocaleString()} icon="💰" accent />}
               {trip.budget != null && (
@@ -234,9 +236,9 @@ async function handleAddActivity(formData) {
               tripId={id}
               tripStartDate={tripStartDate}
               tripEndDate={tripEndDate}
-              onAdded={(d)   => { showToast('Destination added!'); }}
-              onUpdated={(d) => { showToast('Destination updated!'); }}
-              onDeleted={(did) => { showToast('Destination removed.'); }}
+              onAdded={() => showToast('Destination added!')}
+              onUpdated={() => showToast('Destination updated!')}
+              onDeleted={() => showToast('Destination removed.')}
             />
           </div>
         )}
@@ -270,9 +272,9 @@ async function handleAddActivity(formData) {
             <ChecklistSection
               items={checklistItems}
               tripId={id}
-              onAdded={(item)  => {showToast('Item added!');}}
-              onToggled={(upd) => {}}
-              onDeleted={(did) => {showToast('Item removed.');}}
+              onAdded={() => showToast('Item added!')}
+              onToggled={() => {}}
+              onDeleted={() => showToast('Item removed.')}
             />
           </div>
         )}
@@ -285,8 +287,8 @@ async function handleAddActivity(formData) {
               expenses={expenses}
               tripId={id}
               budget={trip.budget}
-              onAdded={(e)   => { showToast('Expense added!'); }}
-              onDeleted={(did) => { showToast('Expense deleted.'); }}
+              onAdded={() => showToast('Expense added!')}
+              onDeleted={() => showToast('Expense deleted.')}
             />
           </div>
         )}
@@ -295,7 +297,14 @@ async function handleAddActivity(formData) {
         {activeTab === 'Share' && (
           <div style={{ animation: 'fadeIn 0.3s ease' }}>
             <SectionTitle title="Share Trip" subtitle="Generate a link or QR code to share this trip plan." />
-            <ShareSection tripId={id}  trip={trip}/>
+            <ShareSection
+              tripId={id}
+              trip={trip}
+              activities={activities}
+              checklistItems={checklistItems}
+              expenses={expenses}
+              destinations={destinations}
+            />
           </div>
         )}
       </main>
@@ -305,12 +314,17 @@ async function handleAddActivity(formData) {
       </Modal>
 
       <Modal open={activityModal} onClose={() => setActivityModal(false)} title="New Activity">
-        <ActivityForm onSubmit={handleAddActivity} onCancel={() => setActivityModal(false)} loading={activityLoading}   tripStartDate={tripStartDate}
-  tripEndDate={tripEndDate} />
+        <ActivityForm
+          onSubmit={handleAddActivity}
+          onCancel={() => setActivityModal(false)}
+          loading={activityLoading}
+          tripStartDate={tripStartDate}
+          tripEndDate={tripEndDate}
+        />
       </Modal>
 
       <Toast toast={toast} />
-            <ConfirmDialog
+      <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title="Delete Trip"
         message="Are you sure you want to delete this entire trip plan? All data will be permanently removed."
@@ -320,24 +334,6 @@ async function handleAddActivity(formData) {
         onConfirm={handleDeleteConfirmed}
         onCancel={() => setConfirmDialog({ isOpen: false })}
       />
-    </div>
-  );
-}
-
-function SectionTitle({ title, subtitle }) {
-  return (
-    <div style={{ marginBottom: '24px' }}>
-      <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '32px', fontWeight: '300', marginBottom: '4px' }}>{title}</h3>
-      {subtitle && <p style={{ color: 'var(--text-muted)', fontSize: '13px' }}>{subtitle}</p>}
-    </div>
-  );
-}
-
-function InfoBlock({ label, children }) {
-  return (
-    <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-md)', padding: '18px' }}>
-      <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--text-muted)', marginBottom: '8px' }}>{label}</div>
-      <div style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: 1.65 }}>{children}</div>
     </div>
   );
 }

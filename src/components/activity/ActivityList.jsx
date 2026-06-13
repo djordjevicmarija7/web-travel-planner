@@ -1,13 +1,20 @@
 import { useState } from 'react';
 import activityService from '../../services/activityService';
 import ActivityForm from './ActivityForm';
-import { Badge, EmptyState, Modal } from '../ui';
+import ActivityCard from './ActivityCard';
+import LegendItem from './LegendItem';
+import { EmptyState, Modal } from '../ui';
 import { ActivityStatus } from '../../enums/activity/ActivityStatus';
 import ConfirmDialog from '../common/ConfirmDialog';
 import { formatDateLong } from '../../utils/formatDate';
 
 const STATUS_LABELS = { planned: 'Planned', reserved: 'Reserved', completed: 'Completed', cancelled: 'Cancelled' };
-const STATUS_COLORS = { planned: 'var(--status-planned)', reserved: 'var(--status-reserved)', completed: 'var(--status-completed)', cancelled: 'var(--status-cancelled)' };
+const STATUS_COLORS = {
+  planned: 'var(--status-planned)',
+  reserved: 'var(--status-reserved)',
+  completed: 'var(--status-completed)',
+  cancelled: 'var(--status-cancelled)',
+};
 const MONTH_NAMES = ['Januar','Februar','Mart','April','Maj','Jun','Jul','Avgust','Septembar','Oktobar','Novembar','Decembar'];
 const DAY_NAMES = ['Pon','Uto','Sre','Čet','Pet','Sub','Ned'];
 
@@ -37,7 +44,7 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
   const [editTarget, setEditTarget] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
-  
+
   const grouped = activities.reduce((acc, a) => {
     const d = a.date?.slice(0, 10);
     if (!acc[d]) acc[d] = [];
@@ -52,7 +59,7 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
   function handleDelete(id) {
     setConfirmDialog({ isOpen: true, id });
   }
- 
+
   async function handleDeleteConfirmed() {
     const id = confirmDialog.id;
     setConfirmDialog({ isOpen: false, id: null });
@@ -127,7 +134,12 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {grouped[date].map((activity) => (
-                    <ActivityCard key={activity.id} activity={activity} onDelete={() => handleDelete(activity.id)} onEdit={() => setEditTarget(activity)} />
+                    <ActivityCard
+                      key={activity.id}
+                      activity={activity}
+                      onDelete={() => handleDelete(activity.id)}
+                      onEdit={() => setEditTarget(activity)}
+                    />
                   ))}
                 </div>
               </div>
@@ -234,7 +246,7 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
                     <div key={dest.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', borderRadius: 'var(--radius-sm)', padding: '5px 11px', fontSize: '12px', color: 'var(--accent-primary)' }}>
                       <span>📍</span>
                       <span style={{ fontWeight: '500' }}>{dest.name}</span>
-                      {dest.location && <span style={{ color: 'var(--accent-dim)', fontSize: '11px' }}>— {dest.location}</span>}
+                      {dest.location && <span style={{ color: 'var(--accent-dim)', fontSize: '11px' }}>– {dest.location}</span>}
                     </div>
                   ))}
                 </div>
@@ -245,7 +257,12 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   {selectedActivities.map((activity) => (
-                    <ActivityCard key={activity.id} activity={activity} onDelete={() => handleDelete(activity.id)} onEdit={() => setEditTarget(activity)} />
+                    <ActivityCard
+                      key={activity.id}
+                      activity={activity}
+                      onDelete={() => handleDelete(activity.id)}
+                      onEdit={() => setEditTarget(activity)}
+                    />
                   ))}
                 </div>
               )}
@@ -294,41 +311,6 @@ function ActivityList({ activities, tripId, onDeleted, onUpdated, tripStartDate,
   );
 }
 
-function LegendItem({ color, border, label, dot }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--text-muted)' }}>
-      {dot
-        ? <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: border }} />
-        : <div style={{ width: '14px', height: '14px', borderRadius: '3px', background: color, border: `1px solid ${border}` }} />
-      }
-      {label}
-    </div>
-  );
-}
-
-function ActivityCard({ activity, onDelete, onEdit }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)} style={{ background: 'var(--bg-surface)', border: `1px solid ${hovered ? 'var(--border-default)' : 'var(--border-subtle)'}`, borderLeft: `3px solid ${STATUS_COLORS[activity.status] || 'var(--text-muted)'}`, padding: '12px 16px', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', transition: 'all var(--transition-fast)' }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-          <span style={{ fontWeight: '500', fontSize: '14px' }}>{activity.name}</span>
-          {activity.time && <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>{activity.time.slice(0,5)}</span>}
-          <Badge variant={activity.status}>{STATUS_LABELS[activity.status]}</Badge>
-        </div>
-        {activity.location && <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>📍 {activity.location}</div>}
-        {activity.description && <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{activity.description}</div>}
-        {activity.estimatedCost != null && <div style={{ fontSize: '12px', color: 'var(--accent-primary)', marginTop: '4px', fontFamily: 'var(--font-mono)' }}>€ {activity.estimatedCost}</div>}
-      </div>
-      <div style={{ display: 'flex', gap: '6px', marginLeft: '12px', flexShrink: 0 }}>
-        <button onClick={onEdit} style={actionBtnStyle}>Edit</button>
-        <button onClick={onDelete} style={{ ...actionBtnStyle, color: 'var(--status-cancelled)', borderColor: 'rgba(240,112,112,0.2)' }}>✕</button>
-      </div>
-    </div>
-  );
-}
-
-const actionBtnStyle = { background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '11px', padding: '4px 10px', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-body)', transition: 'all var(--transition-fast)', letterSpacing: '0.03em' };
 const navBtnStyle = { background: 'var(--bg-elevated)', border: '1px solid var(--border-default)', cursor: 'pointer', color: 'var(--text-primary)', fontSize: '22px', width: '38px', height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-sm)', transition: 'all var(--transition-fast)' };
 const calGridStyle = { display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', marginBottom: '4px' };
 

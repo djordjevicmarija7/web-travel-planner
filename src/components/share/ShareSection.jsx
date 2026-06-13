@@ -5,7 +5,7 @@ import { Button, Badge, EmptyState } from '../ui';
 import ConfirmDialog from '../common/ConfirmDialog';
 import { generateTripPdf } from '../../utils/generateTripPdf';
 
-function ShareSection({ tripId, trip }) {
+function ShareSection({ tripId, trip, activities, checklistItems, expenses, destinations }) {
   const [tokens, setTokens] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -61,16 +61,22 @@ function ShareSection({ tripId, trip }) {
     if (!trip) return;
     setPdfLoading(true);
     try {
-      generateTripPdf(trip);
+      generateTripPdf({
+        ...trip,
+        activities:    activities    || [],
+        checklistItems: checklistItems || [],
+        expenses:      expenses      || [],
+        destinations:  destinations  || [],
+      });
     } finally {
       setPdfLoading(false);
     }
   }
 
-function buildShareUrl(token) {
-  const base = import.meta.env.VITE_APP_URL || window.location.origin;
-  return `${base}/shared/${token}`;
-}
+  function buildShareUrl(token) {
+    const base = import.meta.env.VITE_APP_URL || window.location.origin;
+    return `${base}/shared/${token}`;
+  }
 
   async function copyLink(token) {
     await navigator.clipboard.writeText(buildShareUrl(token.token));
@@ -103,7 +109,7 @@ function buildShareUrl(token) {
               👁 Create View Link
             </Button>
             <Button variant="accent" onClick={() => handleCreate('edit')} disabled={loading}>
-              ✏ Create Edit Link
+              ✎ Create Edit Link
             </Button>
           </div>
         </Panel>
@@ -158,7 +164,7 @@ function buildShareUrl(token) {
                       {isQrOpen ? 'Hide QR' : '⊞ QR Code'}
                     </Button>
                     <Button size="sm" variant="secondary" onClick={() => copyLink(token)}>
-                      {copied === token.id ? '✓ Copied' : 'Copy Link'}
+                      {copied === token.id ? '✔ Copied' : 'Copy Link'}
                     </Button>
                     <Button size="sm" variant="danger" onClick={() => handleRevoke(token.id)}>
                       Revoke
@@ -206,138 +212,22 @@ function Panel({ title, description, children }) {
   );
 }
 
-const pageWrap = {
-  display: 'grid',
-  gap: '16px',
-};
-
-const topGrid = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-  gap: '16px',
-};
-
-const panelCard = {
-  background: 'var(--bg-elevated)',
-  border: '1px solid var(--border-subtle)',
-  borderRadius: 'var(--radius-lg)',
-  padding: '20px',
-  boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
-};
-
-const panelEyebrow = {
-  fontSize: '10px',
-  letterSpacing: '0.11em',
-  textTransform: 'uppercase',
-  color: 'var(--text-muted)',
-  marginBottom: '10px',
-  fontWeight: '600',
-};
-
-const panelDesc = {
-  fontSize: '13px',
-  color: 'var(--text-secondary)',
-  marginBottom: '16px',
-  lineHeight: 1.7,
-};
-
-const buttonRow = {
-  display: 'flex',
-  gap: '10px',
-  flexWrap: 'wrap',
-};
-
-const errorBanner = {
-  background: 'rgba(240,112,112,0.08)',
-  border: '1px solid rgba(240,112,112,0.2)',
-  borderRadius: 'var(--radius-md)',
-  padding: '12px 14px',
-  color: 'var(--status-cancelled)',
-  fontSize: '13px',
-  marginBottom: '16px',
-  display: 'flex',
-  alignItems: 'center',
-  gap: '8px',
-};
-
-const listWrap = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '12px',
-  marginTop: '8px',
-};
-
-const tokenCard = {
-  background: 'var(--bg-elevated)',
-  border: '1px solid var(--border-subtle)',
-  borderRadius: 'var(--radius-lg)',
-  padding: '16px 18px',
-  transition: 'border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast)',
-  boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
-};
-
-const tokenHeader = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  gap: '12px',
-  flexWrap: 'wrap',
-};
-
-const tokenMeta = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '10px',
-  flexWrap: 'wrap',
-};
-
-const tokenActions = {
-  display: 'flex',
-  gap: '6px',
-  flexWrap: 'wrap',
-};
-
-const expiresText = {
-  fontSize: '11px',
-  color: 'var(--text-muted)',
-};
-
-const urlPreview = {
-  marginTop: '12px',
-  padding: '10px 12px',
-  background: 'var(--bg-surface)',
-  borderRadius: 'var(--radius-sm)',
-  fontFamily: 'var(--font-mono)',
-  fontSize: '11px',
-  color: 'var(--text-muted)',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap',
-  border: '1px solid var(--border-subtle)',
-};
-
-const qrWrap = {
-  marginTop: '16px',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: '12px',
-  animation: 'fadeIn 0.2s ease',
-};
-
-const qrFrame = {
-  padding: '16px',
-  background: '#fff',
-  borderRadius: 'var(--radius-md)',
-  boxShadow: 'var(--shadow-md)',
-  border: '1px solid rgba(0,0,0,0.05)',
-};
-
-const qrCaption = {
-  fontSize: '12px',
-  color: 'var(--text-muted)',
-  textAlign: 'center',
-  margin: 0,
-};
+const pageWrap = { display: 'grid', gap: '16px' };
+const topGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' };
+const panelCard = { background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.08)' };
+const panelEyebrow = { fontSize: '10px', letterSpacing: '0.11em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '10px', fontWeight: '600' };
+const panelDesc = { fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.7 };
+const buttonRow = { display: 'flex', gap: '10px', flexWrap: 'wrap' };
+const errorBanner = { background: 'rgba(240,112,112,0.08)', border: '1px solid rgba(240,112,112,0.2)', borderRadius: 'var(--radius-md)', padding: '12px 14px', color: 'var(--status-cancelled)', fontSize: '13px', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' };
+const listWrap = { display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' };
+const tokenCard = { background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: '16px 18px', transition: 'border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast)', boxShadow: '0 8px 24px rgba(0,0,0,0.05)' };
+const tokenHeader = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' };
+const tokenMeta = { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' };
+const tokenActions = { display: 'flex', gap: '6px', flexWrap: 'wrap' };
+const expiresText = { fontSize: '11px', color: 'var(--text-muted)' };
+const urlPreview = { marginTop: '12px', padding: '10px 12px', background: 'var(--bg-surface)', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', border: '1px solid var(--border-subtle)' };
+const qrWrap = { marginTop: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', animation: 'fadeIn 0.2s ease' };
+const qrFrame = { padding: '16px', background: '#fff', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-md)', border: '1px solid rgba(0,0,0,0.05)' };
+const qrCaption = { fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', margin: 0 };
 
 export default ShareSection;

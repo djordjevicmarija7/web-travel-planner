@@ -2,24 +2,18 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useServices } from '../context/ServiceContext';
 import sharedEditService from '../services/sharedEditService';
-import { Badge, Button, Input, Textarea, Select, FormRow, EmptyState, Modal, ProgressBar } from '../components/ui';
+import { Badge, Button, Input, EmptyState, Modal, ProgressBar } from '../components/ui';
 import ActivityForm from '../components/activity/ActivityForm';
+import SharedActivityCard from '../components/share/SharedActivityCard';
+import SharedSection from '../components/share/SharedSection';
+import SharedInfoBlock from '../components/share/SharedInfoBlock';
+import SharedDestinationForm from '../components/share/SharedDestinationForm';
+import SharedExpenseForm from '../components/share/SharedExpenseForm';
+import TripEditForm from '../components/trip/TripEditForm';
 import ConfirmDialog from '../components/common/ConfirmDialog';
 import { generateTripPdf } from '../utils/generateTripPdf';
 import { formatDate, formatDateLong } from '../utils/formatDate';
 
-const STATUS_LABELS = {
-  planned: 'Planned', reserved: 'Reserved',
-  completed: 'Completed', cancelled: 'Cancelled',
-};
-const STATUS_COLORS = {
-  planned: 'var(--status-planned)', reserved: 'var(--status-reserved)',
-  completed: 'var(--status-completed)', cancelled: 'var(--status-cancelled)',
-};
-const STATUS_BG = {
-  planned: 'rgba(91,156,246,0.12)', reserved: 'rgba(240,164,74,0.12)',
-  completed: 'rgba(78,201,148,0.12)', cancelled: 'rgba(240,112,112,0.12)',
-};
 const CATEGORY_ICONS = {
   transport: '✈', accommodation: '🏨', food: '🍽',
   tickets: '🎟', shopping: '🛍', other: '📌',
@@ -28,181 +22,6 @@ const CATEGORY_LABELS = {
   transport: 'Transport', accommodation: 'Accommodation', food: 'Food & Drink',
   tickets: 'Tickets', shopping: 'Shopping', other: 'Other',
 };
-
-function DestinationForm({ initialData, onSubmit, onCancel, loading, tripStartDate, tripEndDate }) {
-  const empty = { name: '', location: '', arrivalDate: '', departureDate: '', description: '', notes: '' };
-  const [form, setForm] = useState(initialData || empty);
-  const [errors, setErrors] = useState({});
-
-  function handleChange(e) {
-    const { name, value } = e.target;
-    setForm(p => ({ ...p, [name]: value }));
-    if (errors[name]) setErrors(p => ({ ...p, [name]: '' }));
-  }
-
-  function validate() {
-    const e = {};
-    if (!form.name.trim()) e.name = 'Name is required.';
-    if (!form.arrivalDate) e.arrivalDate = 'Arrival date is required.';
-    if (!form.departureDate) e.departureDate = 'Departure date is required.';
-    if (form.arrivalDate && form.departureDate && form.departureDate < form.arrivalDate)
-      e.departureDate = 'Departure cannot be before arrival.';
-    if (tripStartDate && form.arrivalDate && form.arrivalDate < tripStartDate)
-      e.arrivalDate = 'Cannot be before trip start.';
-    if (tripEndDate && form.departureDate && form.departureDate > tripEndDate)
-      e.departureDate = 'Cannot be after trip end.';
-    return e;
-  }
-
-  function handleSubmit(e) {
-    e.preventDefault();
-    const ve = validate();
-    if (Object.keys(ve).length > 0) { setErrors(ve); return; }
-    setErrors({});
-    onSubmit(form);
-  }
-
-  return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      {tripStartDate && tripEndDate && (
-        <div style={{ padding: '9px 13px', borderRadius: 'var(--radius-sm)', background: 'var(--accent-subtle)', border: '1px solid var(--accent-border)', fontSize: '11px', color: 'var(--accent-dim)' }}>
-          Trip runs {formatDate(tripStartDate)} → {formatDate(tripEndDate)}
-        </div>
-      )}
-      <Input label="Destination Name *" name="name" value={form.name} onChange={handleChange} placeholder="e.g. Athens" error={errors.name} />
-      <Input label="Location" name="location" value={form.location} onChange={handleChange} placeholder="e.g. Athens, Greece" />
-      <FormRow>
-        <Input label="Arrival Date *" name="arrivalDate" type="date" value={form.arrivalDate} onChange={handleChange} error={errors.arrivalDate} min={tripStartDate || undefined} max={tripEndDate || undefined} />
-        <Input label="Departure Date *" name="departureDate" type="date" value={form.departureDate} onChange={handleChange} error={errors.departureDate} min={tripStartDate || undefined} max={tripEndDate || undefined} />
-      </FormRow>
-      <Textarea label="Description" name="description" value={form.description} onChange={handleChange} placeholder="What will you do here?" style={{ height: '68px' }} />
-      <Textarea label="Notes" name="notes" value={form.notes} onChange={handleChange} placeholder="Reminders, tips..." style={{ height: '60px' }} />
-      <div style={{ display: 'flex', gap: '10px', paddingTop: '4px' }}>
-        <Button type="submit" variant="primary" disabled={loading}>{loading ? 'Saving...' : initialData ? 'Save Changes' : 'Add Destination'}</Button>
-        <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>Cancel</Button>
-      </div>
-    </form>
-  );
-}
-
-
-const CATEGORIES = [
-  { value: 'transport', label: 'Transport', icon: '✈' },
-  { value: 'accommodation', label: 'Accommodation', icon: '🏨' },
-  { value: 'food', label: 'Food & Drink', icon: '🍽' },
-  { value: 'tickets', label: 'Tickets', icon: '🎟' },
-  { value: 'shopping', label: 'Shopping', icon: '🛍' },
-  { value: 'other', label: 'Other', icon: '📌' },
-];
-
-function ExpenseForm({ onSubmit, onCancel, loading }) {
-  const [form, setForm] = useState({ name: '', category: 'other', amount: '', date: '', description: '' });
-  const [errors, setErrors] = useState({});
-
-  function handleChange(e) {
-    const { name, value } = e.target;
-    setForm(p => ({ ...p, [name]: value }));
-    if (errors[name]) setErrors(p => ({ ...p, [name]: '' }));
-  }
-
-  function validate() {
-    const e = {};
-    if (!form.name.trim()) e.name = 'Name is required.';
-    if (!form.amount || Number(form.amount) <= 0) e.amount = 'Amount must be greater than 0.';
-    if (!form.date) e.date = 'Date is required.';
-    return e;
-  }
-
-  function handleSubmit(e) {
-    e.preventDefault();
-    const ve = validate();
-    if (Object.keys(ve).length > 0) { setErrors(ve); return; }
-    setErrors({});
-    onSubmit({ ...form, amount: Number(form.amount) });
-  }
-
-  return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-      <Input label="Name *" name="name" value={form.name} onChange={handleChange} placeholder="e.g. Plane tickets" error={errors.name} />
-      <FormRow>
-        <Select label="Category" name="category" value={form.category} onChange={handleChange}>
-          {CATEGORIES.map(c => (
-            <option key={c.value} value={c.value} style={{ background: 'var(--bg-elevated)' }}>
-              {c.icon} {c.label}
-            </option>
-          ))}
-        </Select>
-        <Input label="Amount (€) *" name="amount" type="number" min="0.01" step="0.01" value={form.amount} onChange={handleChange} placeholder="e.g. 250" error={errors.amount} />
-      </FormRow>
-      <Input label="Date *" name="date" type="date" value={form.date} onChange={handleChange} error={errors.date} />
-      <Textarea label="Description" name="description" value={form.description} onChange={handleChange} placeholder="Extra notes..." style={{ height: '60px' }} />
-      <div style={{ display: 'flex', gap: '10px', paddingTop: '4px' }}>
-        <Button type="submit" variant="primary" disabled={loading}>{loading ? 'Saving...' : 'Save Expense'}</Button>
-        <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>Cancel</Button>
-      </div>
-    </form>
-  );
-}
-
-
-function TripEditForm({ trip, onSubmit, onCancel, loading }) {
-  const [form, setForm] = useState({
-    name: trip.name || '',
-    description: trip.description || '',
-    startDate: trip.startDate?.slice(0, 10) || '',
-    endDate: trip.endDate?.slice(0, 10) || '',
-    budget: trip.budget?.toString() || '',
-    notes: trip.notes || '',
-  });
-  const [errors, setErrors] = useState({});
-
-  function handleChange(e) {
-    const { name, value } = e.target;
-    setForm(p => ({ ...p, [name]: value }));
-    if (errors[name]) setErrors(p => ({ ...p, [name]: '' }));
-  }
-
-  function validate() {
-    const e = {};
-    if (!form.name.trim()) e.name = 'Trip name is required.';
-    if (!form.startDate) e.startDate = 'Start date is required.';
-    if (!form.endDate) e.endDate = 'End date is required.';
-    if (form.startDate && form.endDate && form.endDate < form.startDate)
-      e.endDate = 'End date cannot be before start date.';
-    if (form.budget !== '' && Number(form.budget) < 0)
-      e.budget = 'Budget cannot be negative.';
-    return e;
-  }
-
-  function handleSubmit(e) {
-    e.preventDefault();
-    const ve = validate();
-    if (Object.keys(ve).length > 0) { setErrors(ve); return; }
-    setErrors({});
-    onSubmit({
-      ...form,
-      budget: form.budget === '' ? null : Number(form.budget),
-    });
-  }
-
-  return (
-    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <Input label="Trip Name *" name="name" value={form.name} onChange={handleChange} placeholder="e.g. Summer in Greece" error={errors.name} />
-      <Textarea label="Description" name="description" value={form.description} onChange={handleChange} placeholder="A short description..." />
-      <FormRow>
-        <Input label="Start Date *" name="startDate" type="date" value={form.startDate} onChange={handleChange} error={errors.startDate} />
-        <Input label="End Date *" name="endDate" type="date" value={form.endDate} onChange={handleChange} error={errors.endDate} />
-      </FormRow>
-      <Input label="Planned Budget (€)" name="budget" type="number" min="0" value={form.budget} onChange={handleChange} placeholder="e.g. 1500" error={errors.budget} hint="Leave empty if no budget set" />
-      <Textarea label="Notes" name="notes" value={form.notes} onChange={handleChange} placeholder="Additional notes..." />
-      <div style={{ display: 'flex', gap: '10px', paddingTop: '4px' }}>
-        <Button type="submit" variant="primary" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</Button>
-        <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>Cancel</Button>
-      </div>
-    </form>
-  );
-}
-
 
 function SharedTripPage() {
   const { shareService } = useServices();
@@ -418,9 +237,13 @@ function SharedTripPage() {
           </div>
           <div style={{ flex: 1 }} />
           <Badge variant={accessType}>{accessType.toUpperCase()} Access</Badge>
-          <button onClick={handleDownloadPdf} disabled={pdfLoading} style={pdfBtn}
+          <button
+            onClick={handleDownloadPdf}
+            disabled={pdfLoading}
+            style={pdfBtn}
             onMouseEnter={e => { if (!pdfLoading) e.currentTarget.style.borderColor = 'var(--accent-border)'; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}>
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-subtle)'; }}
+          >
             {pdfLoading ? '⏳' : '⬇'} {pdfLoading ? 'Generating...' : 'PDF'}
           </button>
         </div>
@@ -435,7 +258,7 @@ function SharedTripPage() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
             <div>
               <h1 style={heroTitle}>{trip.name}</h1>
-              <p style={heroMeta}>{formatDate(tripStartDate)} — {formatDate(tripEndDate)}</p>
+              <p style={heroMeta}>{formatDate(tripStartDate)} – {formatDate(tripEndDate)}</p>
             </div>
             {isEdit && (
               <Button size="sm" variant="secondary" onClick={() => setTripEditModal(true)}>
@@ -463,17 +286,17 @@ function SharedTripPage() {
         {/* Description / Notes */}
         {(trip.description || trip.notes) && (
           <section style={stackedSection}>
-            {trip.description && <InfoBlock label="Description">{trip.description}</InfoBlock>}
+            {trip.description && <SharedInfoBlock label="Description">{trip.description}</SharedInfoBlock>}
             {trip.notes && (
-              <InfoBlock label="Notes">
+              <SharedInfoBlock label="Notes">
                 <pre style={notesText}>{trip.notes}</pre>
-              </InfoBlock>
+              </SharedInfoBlock>
             )}
           </section>
         )}
 
         {/* ── Destinations ── */}
-        <Section
+        <SharedSection
           label={`Destinations (${destinations.length})`}
           action={isEdit && (
             <Button size="sm" variant="accent" onClick={() => { setEditDestTarget(null); setDestModal(true); }}>
@@ -516,10 +339,10 @@ function SharedTripPage() {
               })}
             </div>
           )}
-        </Section>
+        </SharedSection>
 
         {/* ── Activities ── */}
-        <Section
+        <SharedSection
           label={`Activities (${activities.length})`}
           action={isEdit && (
             <Button size="sm" variant="accent" onClick={() => setActivityModal(true)}>+ Add</Button>
@@ -533,30 +356,32 @@ function SharedTripPage() {
                 <div key={date}>
                   <div style={dateLabelRow}>
                     <div style={dateMark} />
-                    <span style={dateLabel}>
-                      {formatDateLong(date)}
-                    </span>
+                    <span style={dateLabel}>{formatDateLong(date)}</span>
                   </div>
                   <div style={cardList}>
                     {grouped[date].map(activity => (
-                      <SharedActivityCard key={activity.id} activity={activity} isEdit={isEdit}
+                      <SharedActivityCard
+                        key={activity.id}
+                        activity={activity}
+                        isEdit={isEdit}
                         onEdit={() => setEditActivityTarget(activity)}
-                        onDelete={() => openDeleteConfirm(activity.id, 'activity')} />
+                        onDelete={() => openDeleteConfirm(activity.id, 'activity')}
+                      />
                     ))}
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </Section>
+        </SharedSection>
 
         {/* ── Checklist ── */}
-        <Section label={`Packing List (${completedCheck}/${checklist.length})`}>
+        <SharedSection label={`Packing List (${completedCheck}/${checklist.length})`}>
           {checklist.length > 0 && (
             <div style={{ marginBottom: '14px' }}>
               <ProgressBar value={completedCheck} max={checklist.length} color={completedCheck === checklist.length ? 'var(--status-completed)' : undefined} />
               <div style={miniNote}>
-                {completedCheck === checklist.length && checklist.length > 0 ? '✓ All packed!' : `${checklist.length - completedCheck} item${checklist.length - completedCheck !== 1 ? 's' : ''} remaining`}
+                {completedCheck === checklist.length && checklist.length > 0 ? '✔ All packed!' : `${checklist.length - completedCheck} item${checklist.length - completedCheck !== 1 ? 's' : ''} remaining`}
               </div>
             </div>
           )}
@@ -569,21 +394,27 @@ function SharedTripPage() {
             </form>
           )}
           {checklist.length === 0 ? (
-            <EmptyState icon="✓" title="Checklist is empty" description={isEdit ? 'Add items above.' : 'No items yet.'} />
+            <EmptyState icon="✔" title="Checklist is empty" description={isEdit ? 'Add items above.' : 'No items yet.'} />
           ) : (
             <div style={checklistWrap}>
               {[...checklist.filter(i => !i.isCompleted), ...checklist.filter(i => i.isCompleted)].map(item => (
                 <div key={item.id} style={{ ...checkItemCard, background: item.isCompleted ? 'rgba(78,201,148,0.04)' : 'var(--bg-elevated)', borderColor: item.isCompleted ? 'rgba(78,201,148,0.15)' : 'var(--border-subtle)' }}>
-                  <div onClick={() => isEdit && handleToggleCheckItem(item)} style={{ ...checkBox, borderColor: item.isCompleted ? 'var(--status-completed)' : 'var(--border-strong, var(--border-default))', background: item.isCompleted ? 'var(--status-completed)' : 'transparent', cursor: isEdit ? 'pointer' : 'default' }}>
-                    {item.isCompleted && <span style={checkMark}>✓</span>}
+                  <div
+                    onClick={() => isEdit && handleToggleCheckItem(item)}
+                    style={{ ...checkBox, borderColor: item.isCompleted ? 'var(--status-completed)' : 'var(--border-strong, var(--border-default))', background: item.isCompleted ? 'var(--status-completed)' : 'transparent', cursor: isEdit ? 'pointer' : 'default' }}
+                  >
+                    {item.isCompleted && <span style={checkMark}>✔</span>}
                   </div>
                   <span style={{ ...checkText, textDecoration: item.isCompleted ? 'line-through' : 'none', color: item.isCompleted ? 'var(--text-muted)' : 'var(--text-primary)' }}>
                     {item.title ?? item.name}
                   </span>
                   {isEdit && (
-                    <button onClick={() => handleDeleteCheckItem(item.id)} style={deleteIconBtn}
+                    <button
+                      onClick={() => handleDeleteCheckItem(item.id)}
+                      style={deleteIconBtn}
                       onMouseEnter={e => (e.target.style.color = 'var(--status-cancelled)')}
-                      onMouseLeave={e => (e.target.style.color = 'var(--text-faint, var(--text-muted))')}>
+                      onMouseLeave={e => (e.target.style.color = 'var(--text-faint, var(--text-muted))')}
+                    >
                       ✕
                     </button>
                   )}
@@ -591,10 +422,10 @@ function SharedTripPage() {
               ))}
             </div>
           )}
-        </Section>
+        </SharedSection>
 
         {/* ── Expenses ── */}
-        <Section
+        <SharedSection
           label={`Expenses (${expenses.length})`}
           action={isEdit && (
             <Button size="sm" variant="accent" onClick={() => setExpenseModal(true)}>+ Add</Button>
@@ -625,9 +456,12 @@ function SharedTripPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span style={expenseAmount}>€ {expense.amount?.toFixed(2)}</span>
                     {isEdit && (
-                      <button onClick={() => openDeleteConfirm(expense.id, 'expense')} style={deleteIconBtn}
+                      <button
+                        onClick={() => openDeleteConfirm(expense.id, 'expense')}
+                        style={deleteIconBtn}
                         onMouseEnter={e => (e.target.style.color = 'var(--status-cancelled)')}
-                        onMouseLeave={e => (e.target.style.color = 'var(--text-faint, var(--text-muted))')}>
+                        onMouseLeave={e => (e.target.style.color = 'var(--text-faint, var(--text-muted))')}
+                      >
                         ✕
                       </button>
                     )}
@@ -636,7 +470,7 @@ function SharedTripPage() {
               ))}
             </div>
           )}
-        </Section>
+        </SharedSection>
 
         <div style={footerCta}>
           <p style={footerText}>Plan your own travels with Wanderlust</p>
@@ -663,7 +497,7 @@ function SharedTripPage() {
       </Modal>
 
       <Modal open={destModal} onClose={() => { setDestModal(false); setEditDestTarget(null); }} title={editDestTarget ? 'Edit Destination' : 'New Destination'}>
-        <DestinationForm
+        <SharedDestinationForm
           initialData={editDestTarget ? { name: editDestTarget.name || '', location: editDestTarget.location || '', arrivalDate: editDestTarget.arrivalDate?.slice(0, 10) || '', departureDate: editDestTarget.departureDate?.slice(0, 10) || '', description: editDestTarget.description || '', notes: editDestTarget.notes || '' } : null}
           onSubmit={handleSubmitDestination}
           onCancel={() => { setDestModal(false); setEditDestTarget(null); }}
@@ -674,7 +508,7 @@ function SharedTripPage() {
       </Modal>
 
       <Modal open={expenseModal} onClose={() => setExpenseModal(false)} title="New Expense">
-        <ExpenseForm onSubmit={handleAddExpense} onCancel={() => setExpenseModal(false)} loading={expenseLoading} />
+        <SharedExpenseForm onSubmit={handleAddExpense} onCancel={() => setExpenseModal(false)} loading={expenseLoading} />
       </Modal>
 
       <Modal open={tripEditModal} onClose={() => setTripEditModal(false)} title="Edit Trip Info">
@@ -697,56 +531,7 @@ function SharedTripPage() {
   );
 }
 
-
-function Section({ label, action, children }) {
-  return (
-    <section style={sectionBlock}>
-      <div style={sectionHeader}>
-        <div style={sectionLabel}>{label}</div>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function InfoBlock({ label, children }) {
-  return (
-    <div style={infoCard}>
-      <div style={infoLabel}>{label}</div>
-      <div style={infoContent}>{children}</div>
-    </div>
-  );
-}
-
-function SharedActivityCard({ activity, isEdit, onEdit, onDelete }) {
-  const [hovered, setHovered] = useState(false);
-  return (
-    <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-      style={{ ...activityCard, borderColor: hovered ? 'var(--border-default)' : 'var(--border-subtle)', borderLeftColor: STATUS_COLORS[activity.status] || 'var(--text-muted)' }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={activityTopRow}>
-          <span style={activityName}>{activity.name}</span>
-          {activity.time && <span style={activityTime}>{activity.time.slice(0, 5)}</span>}
-          <span style={{ ...statusTag, background: STATUS_BG[activity.status], color: STATUS_COLORS[activity.status] }}>
-            {STATUS_LABELS[activity.status]}
-          </span>
-        </div>
-        {activity.location && <div style={activityLocation}>📍 {activity.location}</div>}
-        {activity.description && <div style={activityDescription}>{activity.description}</div>}
-        {activity.estimatedCost != null && <div style={activityCost}>€ {activity.estimatedCost}</div>}
-      </div>
-      {isEdit && (
-        <div style={activityActions}>
-          <button onClick={onEdit} style={actionBtn}>Edit</button>
-          <button onClick={onDelete} style={{ ...actionBtn, color: 'var(--status-cancelled)', borderColor: 'rgba(240,112,112,0.2)' }}>✕</button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Styles ────────────────────────────────────────────────────────────────
+// ── Styles ────────────────────────────────────────────────────────────────────
 const pageShell = { minHeight: '100vh', background: 'radial-gradient(circle at top, rgba(91,156,246,0.08), transparent 34%), var(--bg-page, var(--bg-surface))' };
 const topHeader = { borderBottom: '1px solid var(--border-subtle)', background: 'rgba(10,10,16,0.9)', backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 200 };
 const headerInner = { maxWidth: '960px', margin: '0 auto', padding: '0 24px', minHeight: '60px', display: 'flex', alignItems: 'center', gap: '12px' };
@@ -764,12 +549,6 @@ const statCard = { border: '1px solid', borderRadius: '18px', padding: '12px 16p
 const statLabel = { fontSize: '9px', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: '4px', fontWeight: '600' };
 const statValue = { fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: '300' };
 const stackedSection = { display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '26px' };
-const sectionBlock = { marginBottom: '30px' };
-const sectionHeader = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginBottom: '14px' };
-const sectionLabel = { fontSize: '10px', fontWeight: '600', letterSpacing: '0.11em', textTransform: 'uppercase', color: 'var(--text-muted)' };
-const infoCard = { background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderLeft: '2px solid var(--accent-primary)', borderRadius: '18px', padding: '14px 16px' };
-const infoLabel = { fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: '600' };
-const infoContent = { fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.7 };
 const notesText = { fontFamily: 'var(--font-body)', fontSize: '13px', whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.7, color: 'var(--text-secondary)' };
 const cardList = { display: 'flex', flexDirection: 'column', gap: '8px' };
 const destinationCard = { background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderLeft: '3px solid var(--accent-primary)', borderRadius: '18px', padding: '14px 16px' };
@@ -803,14 +582,5 @@ const errorWrap = { minHeight: '100vh', display: 'flex', alignItems: 'center', j
 const errorTitle = { fontFamily: 'var(--font-display)', fontSize: '28px', fontWeight: '300', color: 'var(--text-secondary)', textAlign: 'center', margin: 0 };
 const ctaBtn = { background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-glow))', border: 'none', borderRadius: 'var(--radius-md)', padding: '10px 24px', color: '#0c0c12', fontWeight: '600', fontSize: '12px', cursor: 'pointer', letterSpacing: '0.05em', textTransform: 'uppercase' };
 const actionBtn = { background: 'none', border: '1px solid var(--border-subtle)', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '10px', padding: '4px 9px', borderRadius: 'var(--radius-sm)', fontFamily: 'var(--font-body)', transition: 'all var(--transition-fast)', letterSpacing: '0.03em' };
-const activityCard = { background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', borderLeft: '3px solid var(--text-muted)', borderRadius: '16px', padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', transition: 'all var(--transition-fast)' };
-const activityTopRow = { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px', flexWrap: 'wrap' };
-const activityName = { fontWeight: '500', fontSize: '13px' };
-const activityTime = { fontSize: '10px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' };
-const statusTag = { fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.06em', padding: '2px 7px', borderRadius: '10px', fontWeight: '500' };
-const activityLocation = { fontSize: '11px', color: 'var(--text-secondary)' };
-const activityDescription = { fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' };
-const activityCost = { fontSize: '11px', color: 'var(--accent-primary)', marginTop: '3px', fontFamily: 'var(--font-mono)' };
-const activityActions = { display: 'flex', gap: '5px', marginLeft: '10px', flexShrink: 0 };
 
 export default SharedTripPage;

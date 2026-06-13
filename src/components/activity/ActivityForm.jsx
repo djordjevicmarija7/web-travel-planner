@@ -77,7 +77,7 @@ function ActivityForm({ initialData, onSubmit, onCancel, loading, tripStartDate,
             color: 'var(--accent-dim)',
           }}
         >
-          Trip runs {formatDate(tripStartDate)} → {formatDate(tripEndDate)}. Activity date must stay within this range.
+          Trip runs {formatDate(tripStartDate)} → {formatDate(tripEndDate)} Activity date must stay within this range.
         </div>
       )}
 
