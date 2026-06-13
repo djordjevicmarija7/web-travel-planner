@@ -18,13 +18,14 @@ const CATEGORIES = [
 const statLabelStyle = { fontSize: '10px', letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '6px' };
 const statValueStyle = { fontFamily: 'var(--font-display)', fontSize: '26px', fontWeight: '300' };
 
-function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
+function ExpenseSection({ expenses, tripId, budget, estimatedActivitiesCost = 0, onAdded, onDeleted }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, id: null });
 
   const totalSpent = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
-  const remaining  = budget != null ? budget - totalSpent : null;
+  const totalAll   = totalSpent + estimatedActivitiesCost;
+  const remaining  = budget != null ? budget - totalAll : null;
   const catMap     = Object.fromEntries(CATEGORIES.map(c => [c.value, c]));
 
   const byCategory = expenses.reduce((acc, e) => {
@@ -61,8 +62,8 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
       }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: budget != null ? 'repeat(3, 1fr)' : '1fr 1fr',
-          gap: '20px', marginBottom: budget != null ? '18px' : '0',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
+          gap: '20px', marginBottom: '18px',
         }}>
           {budget != null && (
             <div>
@@ -71,9 +72,23 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
             </div>
           )}
           <div>
-            <div style={statLabelStyle}>Spent</div>
+            <div style={statLabelStyle}>Recorded</div>
             <div style={{ ...statValueStyle, color: 'var(--status-cancelled)' }}>
               € {totalSpent.toFixed(2)}
+            </div>
+          </div>
+          {estimatedActivitiesCost > 0 && (
+            <div>
+              <div style={statLabelStyle}>Estimated</div>
+              <div style={{ ...statValueStyle, color: 'var(--status-reserved)' }}>
+                € {estimatedActivitiesCost.toFixed(2)}
+              </div>
+            </div>
+          )}
+          <div>
+            <div style={statLabelStyle}>Total</div>
+            <div style={{ ...statValueStyle }}>
+              € {totalAll.toFixed(2)}
             </div>
           </div>
           {remaining != null && (
@@ -85,7 +100,14 @@ function ExpenseSection({ expenses, tripId, budget, onAdded, onDeleted }) {
             </div>
           )}
         </div>
-        {budget != null && <ProgressBar value={totalSpent} max={budget} />}
+
+        {budget != null && <ProgressBar value={totalAll} max={budget} />}
+
+        {estimatedActivitiesCost > 0 && (
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px' }}>
+            * Estimated includes planned and reserved activities only
+          </div>
+        )}
 
         {/* Category breakdown */}
         {expenses.length > 0 && (
