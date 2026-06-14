@@ -84,6 +84,34 @@ function ShareSection({ tripId, trip, activities, checklistItems, expenses, dest
     setTimeout(() => setCopied(null), 2000);
   }
 
+  function downloadQr(token) {
+    const svg = document.getElementById(`qr-${token.id}`);
+    if (!svg) return;
+
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const img = new Image();
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 320;
+      canvas.height = 320;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+
+      const pngUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = pngUrl;
+      link.download = `trip-qr-${token.id}.png`;
+      link.click();
+    };
+    img.src = url;
+  }
+
   return (
     <div style={pageWrap}>
       {error && (
@@ -177,9 +205,12 @@ function ShareSection({ tripId, trip, activities, checklistItems, expenses, dest
                 {isQrOpen && (
                   <div style={qrWrap}>
                     <div style={qrFrame}>
-                      <QRCodeSVG value={buildShareUrl(token.token)} size={160} />
+                      <QRCodeSVG id={`qr-${token.id}`} value={buildShareUrl(token.token)} size={160} />
                     </div>
                     <p style={qrCaption}>Scan to open this trip plan</p>
+                    <Button size="sm" variant="secondary" onClick={() => downloadQr(token)}>
+                      ⬇ Download QR
+                    </Button>
                   </div>
                 )}
               </div>
