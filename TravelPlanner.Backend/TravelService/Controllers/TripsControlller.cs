@@ -22,21 +22,26 @@ namespace TravelService.Controllers
         {
             return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         }
+        private bool IsAdmin()
+        {
+            return User.FindFirstValue(ClaimTypes.Role) == "admin";
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var trips = await _tripService.GetAllAsync(GetUserId());
+            var trips = IsAdmin()
+                ? await _tripService.GetAllForAdminAsync()
+                : await _tripService.GetAllAsync(GetUserId());
+
             return Ok(trips);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var trip = await _tripService.GetByIdAsync(id, GetUserId());
-            if (trip == null)
-            {
-                return NotFound();
-            }
+            var trip = await _tripService.GetByIdAsync(id, GetUserId(), IsAdmin());
+            if (trip == null) return NotFound();
             return Ok(trip);
         }
 
@@ -67,7 +72,7 @@ namespace TravelService.Controllers
             }
             try
             {
-                var trip = await _tripService.UpdateAsync(id, dto, GetUserId());
+                var trip = await _tripService.UpdateAsync(id, dto, GetUserId(), IsAdmin());
                 if (trip == null)
                 {
                     return NotFound();
@@ -83,7 +88,7 @@ namespace TravelService.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var deleted = await _tripService.DeleteAsync(id, GetUserId());
+            var deleted = await _tripService.DeleteAsync(id, GetUserId(), IsAdmin());
             if (!deleted)
             {
                 return NotFound();

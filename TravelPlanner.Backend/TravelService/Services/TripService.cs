@@ -66,13 +66,15 @@ namespace TravelService.Services
             return result;
         }
 
-        public async Task<bool> DeleteAsync(int id, int userId)
+        public async Task<bool> DeleteAsync(int id, int userId, bool isAdmin = false)
         {
             var trip = await _context.Trips
-                .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+                .FirstOrDefaultAsync(t => t.Id == id && (t.UserId == userId || isAdmin));
             if (trip == null) return false;
 
-            var jwt = GenerateInternalToken(userId);
+            // Use the trip's actual owner for the internal token so downstream
+            // services (Activity/Planning) operate with the correct identity.
+            var jwt = GenerateInternalToken(trip.UserId);
 
             await _activityClient.DeleteAllByTripAsync(id, jwt);
             await _planningClient.DeleteAllByTripAsync(id, jwt);
@@ -111,20 +113,20 @@ namespace TravelService.Services
             return _mapper.Map<List<TripDto>>(trips);
         }
 
-        public async Task<TripDto?> GetByIdAsync(int id, int userId)
+        public async Task<TripDto?> GetByIdAsync(int id, int userId, bool isAdmin = false)
         {
             var trip = await _context.Trips
                 .Include(t => t.Destinations)
-                .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+                .FirstOrDefaultAsync(t => t.Id == id && (t.UserId == userId || isAdmin));
 
             return trip == null ? null : _mapper.Map<TripDto>(trip);
         }
 
-        public async Task<TripDto?> UpdateAsync(int id, UpdateTripDto dto, int userId)
+        public async Task<TripDto?> UpdateAsync(int id, UpdateTripDto dto, int userId, bool isAdmin = false)
         {
             var trip = await _context.Trips
                 .Include(t => t.Destinations)
-                .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
+                .FirstOrDefaultAsync(t => t.Id == id && (t.UserId == userId || isAdmin));
 
             if (trip == null)
                 return null;
@@ -146,9 +148,18 @@ namespace TravelService.Services
 
             await _context.SaveChangesAsync();
 
-            var result = _mapper.Map<TripDto>(trip); 
+            var result = _mapper.Map<TripDto>(trip);
             await _hubContext.Clients.All.SendAsync("TripUpdated", result);
             return result;
+        }
+
+        public async Task<List<TripDto>> GetAllForAdminAsync()
+        {
+            var trips = await _context.Trips
+                .Include(t => t.Destinations)
+                .ToListAsync();
+
+            return _mapper.Map<List<TripDto>>(trips);
         }
 
         private string GenerateInternalToken(int userId)
@@ -169,5 +180,6 @@ namespace TravelService.Services
                 signingCredentials: creds);
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
     }
 }

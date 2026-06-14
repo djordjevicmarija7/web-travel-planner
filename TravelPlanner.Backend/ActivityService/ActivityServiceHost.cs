@@ -49,9 +49,8 @@ namespace ActivityService
                             builder.Services.AddScoped<IActivityService, ActivityServiceImplementation>();
 
                             builder.Services.AddHttpClient<ITripClient, TripApiClient>(client =>
-                            {
-                                client.BaseAddress = new Uri("http://localhost:5002");
-                            });
+                                client.BaseAddress = new Uri(builder.Configuration["Services:TravelService"]!));
+                            
 
                             builder.Services.AddHttpContextAccessor();
 

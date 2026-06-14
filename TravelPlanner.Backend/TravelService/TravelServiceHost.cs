@@ -54,16 +54,16 @@ namespace TravelService
                             builder.Services.AddScoped<IShareService, ShareService>();
 
                             builder.Services.AddHttpClient<IActivityClient, ActivityApiClient>(client =>
-                                client.BaseAddress = new Uri("http://localhost:5003"));
+                                client.BaseAddress = new Uri(builder.Configuration["Services:ActivityService"]!));
 
                             builder.Services.AddHttpClient<IExpenseClient, ExpenseApiClient>(client =>
-                                client.BaseAddress = new Uri("http://localhost:5004"));
+                                client.BaseAddress = new Uri(builder.Configuration["Services:PlanningService"]!));
 
                             builder.Services.AddHttpClient<IChecklistClient, ChecklistApiClient>(client =>
-                                client.BaseAddress = new Uri("http://localhost:5004"));
+                                client.BaseAddress = new Uri(builder.Configuration["Services:PlanningService"]!));
 
                             builder.Services.AddHttpClient<IPlanningClient, PlanningApiClient>(client =>
-                                client.BaseAddress = new Uri("http://localhost:5004"));
+                                client.BaseAddress = new Uri(builder.Configuration["Services:PlanningService"]!));
 
                             builder.Services.AddHttpClient();
 

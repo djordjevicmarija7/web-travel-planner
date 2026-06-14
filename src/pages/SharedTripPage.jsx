@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useServices } from '../context/ServiceContext';
+import { useAuth } from '../context/AuthContext';
 import sharedEditService from '../services/sharedEditService';
 import { Badge, Button, Input, EmptyState, Modal, ProgressBar } from '../components/ui';
 import ActivityForm from '../components/activity/ActivityForm';
@@ -25,6 +26,7 @@ const CATEGORY_LABELS = {
 
 function SharedTripPage() {
   const { shareService } = useServices();
+  const { user } = useAuth();
   const { token } = useParams();
   const navigate = useNavigate();
 
@@ -187,6 +189,10 @@ function SharedTripPage() {
     finally { setPdfLoading(false); }
   }
 
+  function goToLogin() {
+    navigate(`/login?redirect=${encodeURIComponent(`/shared/${token}`)}`);
+  }
+
   if (loading) {
     return (
       <div style={loadingWrap}>
@@ -209,6 +215,8 @@ function SharedTripPage() {
 
   const { accessType } = data;
   const isEdit = accessType === 'edit';
+  // The link grants edit access, but the visitor must be signed in to actually use it.
+  const canEdit = isEdit && !!user;
 
   const totalSpent = expenses.reduce((s, e) => s + (e.amount || 0), 0);
   const completedCheck = checklist.filter(i => i.isCompleted).length;
@@ -260,13 +268,21 @@ function SharedTripPage() {
               <h1 style={heroTitle}>{trip.name}</h1>
               <p style={heroMeta}>{formatDate(tripStartDate)} – {formatDate(tripEndDate)}</p>
             </div>
-            {isEdit && (
+            {canEdit && (
               <Button size="sm" variant="secondary" onClick={() => setTripEditModal(true)}>
                 ✎ Edit Trip Info
               </Button>
             )}
           </div>
         </section>
+
+        {/* Sign in to edit banner */}
+        {isEdit && !user && (
+          <div style={loginBanner}>
+            <span>This link allows editing — sign in to make changes.</span>
+            <button onClick={goToLogin} style={ctaBtnSmall}>Sign In</button>
+          </div>
+        )}
 
         {/* Stats */}
         <section style={statsGrid}>
@@ -298,14 +314,14 @@ function SharedTripPage() {
         {/* ── Destinations ── */}
         <SharedSection
           label={`Destinations (${destinations.length})`}
-          action={isEdit && (
+          action={canEdit && (
             <Button size="sm" variant="accent" onClick={() => { setEditDestTarget(null); setDestModal(true); }}>
               + Add
             </Button>
           )}
         >
           {destinations.length === 0 ? (
-            <EmptyState icon="🗺" title="No destinations" description={isEdit ? 'Add the first destination.' : 'No destinations yet.'} />
+            <EmptyState icon="🗺" title="No destinations" description={canEdit ? 'Add the first destination.' : 'No destinations yet.'} />
           ) : (
             <div style={cardList}>
               {sortedDestinations.map(dest => {
@@ -327,7 +343,7 @@ function SharedTripPage() {
                         {dest.description && <p style={mutedText}>{dest.description}</p>}
                         {dest.notes && <p style={{ ...mutedText, fontStyle: 'italic' }}>💬 {dest.notes}</p>}
                       </div>
-                      {isEdit && (
+                      {canEdit && (
                         <div style={{ display: 'flex', gap: '5px', flexShrink: 0 }}>
                           <button onClick={() => { setEditDestTarget(dest); setDestModal(true); }} style={actionBtn}>Edit</button>
                           <button onClick={() => openDeleteConfirm(dest.id, 'destination')} style={{ ...actionBtn, color: 'var(--status-cancelled)', borderColor: 'rgba(240,112,112,0.2)' }}>✕</button>
@@ -344,12 +360,12 @@ function SharedTripPage() {
         {/* ── Activities ── */}
         <SharedSection
           label={`Activities (${activities.length})`}
-          action={isEdit && (
+          action={canEdit && (
             <Button size="sm" variant="accent" onClick={() => setActivityModal(true)}>+ Add</Button>
           )}
         >
           {activities.length === 0 ? (
-            <EmptyState icon="🗓" title="No activities" description={isEdit ? 'Add the first activity.' : 'No activities yet.'} />
+            <EmptyState icon="🗓" title="No activities" description={canEdit ? 'Add the first activity.' : 'No activities yet.'} />
           ) : (
             <div style={timelineWrap}>
               {sortedDates.map(date => (
@@ -363,7 +379,7 @@ function SharedTripPage() {
                       <SharedActivityCard
                         key={activity.id}
                         activity={activity}
-                        isEdit={isEdit}
+                        isEdit={canEdit}
                         onEdit={() => setEditActivityTarget(activity)}
                         onDelete={() => openDeleteConfirm(activity.id, 'activity')}
                       />
@@ -385,7 +401,7 @@ function SharedTripPage() {
               </div>
             </div>
           )}
-          {isEdit && (
+          {canEdit && (
             <form onSubmit={handleAddCheckItem} style={checkForm}>
               <div style={{ flex: 1 }}>
                 <Input value={newCheckItem} onChange={e => setNewCheckItem(e.target.value)} placeholder="e.g. Passport, charger..." />
@@ -394,21 +410,21 @@ function SharedTripPage() {
             </form>
           )}
           {checklist.length === 0 ? (
-            <EmptyState icon="✔" title="Checklist is empty" description={isEdit ? 'Add items above.' : 'No items yet.'} />
+            <EmptyState icon="✔" title="Checklist is empty" description={canEdit ? 'Add items above.' : 'No items yet.'} />
           ) : (
             <div style={checklistWrap}>
               {[...checklist.filter(i => !i.isCompleted), ...checklist.filter(i => i.isCompleted)].map(item => (
                 <div key={item.id} style={{ ...checkItemCard, background: item.isCompleted ? 'rgba(78,201,148,0.04)' : 'var(--bg-elevated)', borderColor: item.isCompleted ? 'rgba(78,201,148,0.15)' : 'var(--border-subtle)' }}>
                   <div
-                    onClick={() => isEdit && handleToggleCheckItem(item)}
-                    style={{ ...checkBox, borderColor: item.isCompleted ? 'var(--status-completed)' : 'var(--border-strong, var(--border-default))', background: item.isCompleted ? 'var(--status-completed)' : 'transparent', cursor: isEdit ? 'pointer' : 'default' }}
+                    onClick={() => canEdit && handleToggleCheckItem(item)}
+                    style={{ ...checkBox, borderColor: item.isCompleted ? 'var(--status-completed)' : 'var(--border-strong, var(--border-default))', background: item.isCompleted ? 'var(--status-completed)' : 'transparent', cursor: canEdit ? 'pointer' : 'default' }}
                   >
                     {item.isCompleted && <span style={checkMark}>✔</span>}
                   </div>
                   <span style={{ ...checkText, textDecoration: item.isCompleted ? 'line-through' : 'none', color: item.isCompleted ? 'var(--text-muted)' : 'var(--text-primary)' }}>
                     {item.title ?? item.name}
                   </span>
-                  {isEdit && (
+                  {canEdit && (
                     <button
                       onClick={() => handleDeleteCheckItem(item.id)}
                       style={deleteIconBtn}
@@ -427,7 +443,7 @@ function SharedTripPage() {
         {/* ── Expenses ── */}
         <SharedSection
           label={`Expenses (${expenses.length})`}
-          action={isEdit && (
+          action={canEdit && (
             <Button size="sm" variant="accent" onClick={() => setExpenseModal(true)}>+ Add</Button>
           )}
         >
@@ -441,7 +457,7 @@ function SharedTripPage() {
             </div>
           )}
           {expenses.length === 0 ? (
-            <EmptyState icon="💳" title="No expenses" description={isEdit ? 'Track spending by adding expenses.' : 'No expenses recorded.'} />
+            <EmptyState icon="💳" title="No expenses" description={canEdit ? 'Track spending by adding expenses.' : 'No expenses recorded.'} />
           ) : (
             <div style={expenseList}>
               {[...expenses].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '')).map(expense => (
@@ -455,7 +471,7 @@ function SharedTripPage() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                     <span style={expenseAmount}>€ {expense.amount?.toFixed(2)}</span>
-                    {isEdit && (
+                    {canEdit && (
                       <button
                         onClick={() => openDeleteConfirm(expense.id, 'expense')}
                         style={deleteIconBtn}
@@ -544,6 +560,8 @@ const heroCard = { background: 'linear-gradient(180deg, rgba(255,255,255,0.02), 
 const accessPill = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 12px', borderRadius: '999px', marginBottom: '14px', fontSize: '11px', fontWeight: '600', border: '1px solid transparent' };
 const heroTitle = { fontFamily: 'var(--font-display)', fontSize: '44px', fontWeight: '300', lineHeight: 1.05, margin: 0 };
 const heroMeta = { color: 'var(--text-muted)', fontSize: '13px', fontFamily: 'var(--font-mono)', marginTop: '8px', marginBottom: 0 };
+const loginBanner = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap', background: 'rgba(240,164,74,0.08)', border: '1px solid rgba(240,164,74,0.25)', borderRadius: '16px', padding: '12px 18px', marginBottom: '22px', fontSize: '13px', color: 'var(--status-reserved)' };
+const ctaBtnSmall = { background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-glow))', border: 'none', borderRadius: 'var(--radius-md)', padding: '7px 16px', color: '#0c0c12', fontWeight: '600', fontSize: '11px', cursor: 'pointer', letterSpacing: '0.05em', textTransform: 'uppercase', flexShrink: 0 };
 const statsGrid = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '24px' };
 const statCard = { border: '1px solid', borderRadius: '18px', padding: '12px 16px' };
 const statLabel = { fontSize: '9px', letterSpacing: '0.09em', textTransform: 'uppercase', marginBottom: '4px', fontWeight: '600' };

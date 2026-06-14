@@ -21,19 +21,23 @@ namespace TravelService.Controllers
         {
             return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
         }
+        private bool IsAdmin()
+        {
+            return User.FindFirstValue(ClaimTypes.Role) == "admin";
+        }
 
         [HttpGet]
         public async Task<IActionResult> GetAll(int tripId)
         {
             var destinations = await _destinationService
-                .GetAllByTripAsync(tripId, GetUserId());
+                .GetAllByTripAsync(tripId, GetUserId(), IsAdmin());
             return Ok(destinations);
         }
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int tripId, int id)
         {
             var destination = await _destinationService
-                .GetByIdAsync(id, tripId, GetUserId());
+                .GetByIdAsync(id, tripId, GetUserId(), IsAdmin());
             if (destination == null)
             {
                 return NotFound();
@@ -50,7 +54,7 @@ namespace TravelService.Controllers
             }
             try
             {
-                var destination = await _destinationService.CreateAsync(tripId, dto, GetUserId());
+                var destination = await _destinationService.CreateAsync(tripId, dto, GetUserId(), IsAdmin());
                 return CreatedAtAction(nameof(GetById), new { tripId, id = destination.Id }, destination);
             }
             catch (ArgumentException ex)
@@ -72,7 +76,7 @@ namespace TravelService.Controllers
             }
             try
             {
-                var destination = await _destinationService.UpdateAsync(id, tripId, dto, GetUserId());
+                var destination = await _destinationService.UpdateAsync(id, tripId, dto, GetUserId(), IsAdmin());
                 if (destination == null)
                 {
                     return NotFound();
@@ -88,7 +92,7 @@ namespace TravelService.Controllers
         public async Task<IActionResult> Delete(int tripId, int id)
         {
             var deleted = await _destinationService
-                .DeleteAsync(id, tripId, GetUserId());
+                .DeleteAsync(id, tripId, GetUserId(), IsAdmin());
             if (!deleted) return NotFound();
             return NoContent();
         }
